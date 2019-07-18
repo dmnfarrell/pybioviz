@@ -19,7 +19,16 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
-def bokeh_view_alignment(aln, fontsize="8pt"):
+import os,sys
+import pandas as pd
+from . import utils
+from bokeh.plotting import figure
+from bokeh.models import ColumnDataSource, Plot, LinearAxis, Grid, Range1d,CustomJS, Slider, HoverTool
+from bokeh.models.glyphs import Text, Rect
+from bokeh.layouts import gridplot, column
+import panel as pn
+
+def view_sequence_alignment(aln, fontsize="8pt"):
     """Bokeh sequence alignment view"""
     
     seqs = [rec.seq for rec in (aln)]
@@ -99,4 +108,64 @@ def bokeh_view_alignment(aln, fontsize="8pt"):
     slider.js_on_change('value', callback)
     
     p = gridplot([[p],[slider],[p3],[p1]], toolbar_location='below')
+    return p
+
+def view_features(features, fontsize="12pt", plot_width=800):
+    """Bokeh sequence alignment view"""
+    
+    df = utils.features_to_dataframe(features)#, cds=True)
+    df['length'] = df.end-df.start
+    df['level'] = 1
+    #print (df)
+    text = df.gene
+    #start = [f.location.start for f in features]
+    colors = ['green' for i in features]
+    S = df.start.min()
+    N = df.end.max()+10
+        
+    x = list(df.start+df.length/2)
+    widths = df.end-df.start
+    #print (x,widths)
+    h = 20
+    
+    source = ColumnDataSource(dict(start=x, y=df.strand, width=widths, text=text,colors=colors))
+    #source = ColumnDataSource(df)
+    plot_height = 50
+    x_range = Range1d(S,N, bounds='auto')
+    
+    viewlen=3000
+    view_range = (0,viewlen)
+    tools="xpan, xwheel_zoom, reset, save"
+
+    #entire sequence view (no text, with zoom)
+    p = figure(title=None, plot_width=plot_width, plot_height=100, x_range=x_range, y_range=(-2,2), tools=tools, 
+                    min_border=0, toolbar_location='below')
+    rects = Rect(x="start", y="y", width="width", height=.4, fill_color="colors", line_color='black', fill_alpha=0.6)
+    p.add_glyph(source, rects)
+    p.yaxis.visible = False
+    p.grid.visible = False  
+    
+    #sequence text view with ability to scroll along x axis
+    p1 = figure(title=None, plot_width=plot_width, plot_height=200, x_range=view_range, y_range=(-2,2), tools="xpan,reset", 
+                    min_border=0, toolbar_location='below')#, lod_factor=1)          
+    glyph = Text(x="start", y="y", y_offset=-1, text="text", text_align='center',text_color="black", text_font="monospace",text_font_size=fontsize)
+    rects = Rect(x="start", y="y", width="width", height=.5, fill_color="colors", fill_alpha=0.4)
+    p1.add_glyph(source, glyph)
+    p1.add_glyph(source, rects)
+  
+    p1.grid.visible = False
+    p1.xaxis.major_label_text_font_style = "bold"
+    p1.yaxis.minor_tick_line_width = 0
+    p1.yaxis.major_tick_line_width = 0
+    
+    jscode="""    
+    var start = cb_obj.value;    
+    x_range.setv({"start": start, "end": start+l})   
+    """
+    callback = CustomJS(
+        args=dict(x_range=p1.x_range,l=viewlen), code=jscode)
+    slider = Slider (start=1, end=N, value=1, step=100)
+    slider.js_on_change('value', callback)
+    
+    p = gridplot([[p],[slider],[p1]], toolbar_location='below')
     return p

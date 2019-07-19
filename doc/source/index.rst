@@ -8,7 +8,7 @@ Contents:
    :maxdepth: 2
 
    description
-   examples
+   usage
    modules
 
 Indices and tables

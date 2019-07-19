@@ -110,16 +110,19 @@ def view_sequence_alignment(aln, fontsize="8pt"):
     p = gridplot([[p],[slider],[p3],[p1]], toolbar_location='below')
     return p
 
-def view_features(features, fontsize="12pt", plot_width=800):
+def view_features(features, preview=True, fontsize="8pt", plot_width=800, plot_height=100):
     """Bokeh sequence alignment view"""
     
     df = utils.features_to_dataframe(features)#, cds=True)
+    df = df[df.type!='region']
+    #df['gene'] = df.gene.apply(lambda x: x.locus_tag)
     df['length'] = df.end-df.start
     df['level'] = 1
-    #print (df)
+    df['color'] = 'green'
+    df['x'] = df.start+df.length/2
+    
+    #print (df[:3])
     text = df.gene
-    #start = [f.location.start for f in features]
-    colors = ['green' for i in features]
     S = df.start.min()
     N = df.end.max()+10
         
@@ -127,45 +130,59 @@ def view_features(features, fontsize="12pt", plot_width=800):
     widths = df.end-df.start
     #print (x,widths)
     h = 20
-    
-    source = ColumnDataSource(dict(start=x, y=df.strand, width=widths, text=text,colors=colors))
-    #source = ColumnDataSource(df)
-    plot_height = 50
+
+    source = ColumnDataSource(df)
     x_range = Range1d(S,N, bounds='auto')
-    
+        
     viewlen=3000
     view_range = (0,viewlen)
-    tools="xpan, xwheel_zoom, reset, save"
+    #tools="xpan, xwheel_zoom, reset, save"
 
-    #entire sequence view (no text, with zoom)
-    p = figure(title=None, plot_width=plot_width, plot_height=100, x_range=x_range, y_range=(-2,2), tools=tools, 
-                    min_border=0, toolbar_location='below')
-    rects = Rect(x="start", y="y", width="width", height=.4, fill_color="colors", line_color='black', fill_alpha=0.6)
-    p.add_glyph(source, rects)
-    p.yaxis.visible = False
-    p.grid.visible = False  
+    hover = HoverTool(
+        tooltips=[            
+            ("gene", "@gene"),     
+            ("locus_tag", "@locus_tag"),
+            ("protein_id", "@protein_id"), 
+            ("length", "@length"),             
+        ]
+    )  
+    tools=[hover,"xpan, xwheel_zoom, save"]
     
     #sequence text view with ability to scroll along x axis
-    p1 = figure(title=None, plot_width=plot_width, plot_height=200, x_range=view_range, y_range=(-2,2), tools="xpan,reset", 
-                    min_border=0, toolbar_location='below')#, lod_factor=1)          
-    glyph = Text(x="start", y="y", y_offset=-1, text="text", text_align='center',text_color="black", text_font="monospace",text_font_size=fontsize)
-    rects = Rect(x="start", y="y", width="width", height=.5, fill_color="colors", fill_alpha=0.4)
+    p1 = figure(title=None, plot_width=plot_width, plot_height=plot_height, x_range=view_range,
+                y_range=(-2,2), tools=tools, min_border=0, toolbar_location='right')#, lod_factor=1)          
+    glyph = Text(x="x", y="strand", y_offset=5, text="gene", text_align='center',text_color="black", 
+                 text_font="monospace",text_font_size=fontsize)
+    rects = Rect(x="x", y="strand", width="length", height=.5, fill_color="color", fill_alpha=0.4)
     p1.add_glyph(source, glyph)
     p1.add_glyph(source, rects)
   
     p1.grid.visible = False
+    p1.yaxis.visible = False
     p1.xaxis.major_label_text_font_style = "bold"
     p1.yaxis.minor_tick_line_width = 0
     p1.yaxis.major_tick_line_width = 0
+    p1.toolbar.logo = None
     
-    jscode="""    
-    var start = cb_obj.value;    
-    x_range.setv({"start": start, "end": start+l})   
-    """
-    callback = CustomJS(
-        args=dict(x_range=p1.x_range,l=viewlen), code=jscode)
-    slider = Slider (start=1, end=N, value=1, step=100)
-    slider.js_on_change('value', callback)
-    
-    p = gridplot([[p],[slider],[p1]], toolbar_location='below')
+    if preview == True:
+        #entire sequence view (no text, with zoom)
+        p = figure(title=None, plot_width=plot_width, plot_height=100, x_range=x_range, y_range=(-2,2), tools=tools, 
+                        min_border=0, toolbar_location='below')
+        rects = Rect(x="x", y="strand", width="length", height=.4, fill_color="colors", line_color='black', fill_alpha=0.6)
+        p.add_glyph(source, rects)
+        p.yaxis.visible = False
+        p.grid.visible = False
+
+        jscode="""    
+        var start = cb_obj.value;    
+        x_range.setv({"start": start, "end": start+l})   
+        """
+        callback = CustomJS(
+            args=dict(x_range=p1.x_range,l=viewlen), code=jscode)
+        slider = Slider (start=1, end=N, value=1, step=100)
+        slider.js_on_change('value', callback)
+
+        p = gridplot([[p],[slider],[p1]], toolbar_location='below')
+    else:
+        p = p1
     return p

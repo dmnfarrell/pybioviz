@@ -110,7 +110,7 @@ def view_sequence_alignment(aln, fontsize="8pt"):
     p = gridplot([[p],[slider],[p3],[p1]], toolbar_location='below')
     return p
 
-def view_features(features, preview=True, fontsize="8pt", plot_width=800, plot_height=100):
+def view_features(features, preview=True, view_range=None, fontsize="8pt", plot_width=800, plot_height=100):
     """Bokeh sequence alignment view"""
     
     df = utils.features_to_dataframe(features)#, cds=True)
@@ -127,15 +127,15 @@ def view_features(features, preview=True, fontsize="8pt", plot_width=800, plot_h
     N = df.end.max()+10
         
     x = list(df.start+df.length/2)
-    widths = df.end-df.start
-    #print (x,widths)
     h = 20
 
-    source = ColumnDataSource(df)
+    source = ColumnDataSource(df)    
     x_range = Range1d(S,N, bounds='auto')
         
     viewlen=3000
-    view_range = (0,viewlen)
+    if view_range == None:
+        view_range = (0,viewlen)
+    
     #tools="xpan, xwheel_zoom, reset, save"
 
     hover = HoverTool(
@@ -144,7 +144,8 @@ def view_features(features, preview=True, fontsize="8pt", plot_width=800, plot_h
             ("locus_tag", "@locus_tag"),
             ("protein_id", "@protein_id"), 
             ("length", "@length"),             
-        ]
+        ],
+        #names=['rects']
     )  
     tools=[hover,"xpan, xwheel_zoom, save"]
     
@@ -152,8 +153,8 @@ def view_features(features, preview=True, fontsize="8pt", plot_width=800, plot_h
     p1 = figure(title=None, plot_width=plot_width, plot_height=plot_height, x_range=view_range,
                 y_range=(-2,2), tools=tools, min_border=0, toolbar_location='right')#, lod_factor=1)          
     glyph = Text(x="x", y="strand", y_offset=5, text="gene", text_align='center',text_color="black", 
-                 text_font="monospace",text_font_size=fontsize)
-    rects = Rect(x="x", y="strand", width="length", height=.5, fill_color="color", fill_alpha=0.4)
+                 text_font="monospace",text_font_size=fontsize, name="genetext")
+    rects = Rect(x="x", y="strand", width="length", height=.5, fill_color="color", fill_alpha=0.4, name='rects')
     p1.add_glyph(source, glyph)
     p1.add_glyph(source, rects)
   

@@ -1,0 +1,34 @@
+Background
+----------
+
+Bioinformatics visualization tools with PyViz Panel and Bokeh. The objective is to have a set of viewers that
+ can be re-used inside notebook dashboards as part of bioinformatic workflows or deployed as local web apps.
+
+Documentation is at http://pybioviz.readthedocs.io
+
+Tools
+-----
+
+* multiple sequence aligner tool
+* genome annotation viewer
+* short read alignment viewer
+
+Dependencies
+------------
+
+pandas
+biopython
+panel
+bokeh
+pysam
+bcbio_gff
+
+Installation
+------------
+
+pip install pybioviz
+
+Links
+-----
+
+https://github.com/dmnfarrell/pybioviz

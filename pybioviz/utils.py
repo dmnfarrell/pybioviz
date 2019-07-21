@@ -25,6 +25,12 @@ import pandas as pd
 featurekeys = ['type','protein_id','locus_tag','gene','db_xref',
                'product', 'note', 'translation','pseudo','start','end','strand']
 
+def get_template():
+
+    f=open('../pybioviz/templates/base.html','r')
+    tmpl = ''.join(f.readlines())
+    return tmpl
+
 def muscle_alignment(seqs):
     """Align 2 sequences with muscle"""
 
@@ -39,14 +45,14 @@ def muscle_alignment(seqs):
 
 def get_sequence_colors(seqs):
     """Get colors for a sequence"""
-    
+
     from bokeh.palettes import brewer, viridis
     from Bio.PDB.Polypeptide import aa1
     pal = viridis(20)
     pal.append('white')
     aa1 = list(aa1)
     aa1.append('-')
-    pcolors = {i:j for i,j in zip(aa1,pal)}    
+    pcolors = {i:j for i,j in zip(aa1,pal)}
     text = [i for s in list(seqs) for i in s]
     clrs =  {'A':'red','T':'green','G':'orange','C':'blue','-':'white'}
     try:
@@ -57,8 +63,8 @@ def get_sequence_colors(seqs):
 
 def get_cons(aln):
     """Get conservation values from alignment"""
-    
-    from collections import Counter 
+
+    from collections import Counter
     x=[]
     l = len(aln)
     for i in range(aln.get_alignment_length()):
@@ -123,9 +129,9 @@ def features_to_dataframe(features, cds=False):
                'in the translation qualifier of each protein feature.' )
     return df
 
-def get_features(gff_file): 
+def get_features(gff_file):
     """Get features from gff file"""
-    
+
     if not os.path.exists(gff_file):
         return
     from BCBio import GFF
@@ -133,11 +139,11 @@ def get_features(gff_file):
     rec = list(GFF.parse(in_handle))[0]
     in_handle.close()
     return rec.features
-    
+
 def get_coverage(bam_file, chr, start, end):
     """Get coverage from bam file at specified region"""
 
-    import pysam 
+    import pysam
     if not os.path.exists(bam_file):
         return
     samfile = pysam.AlignmentFile(bam_file, "r")
@@ -147,7 +153,7 @@ def get_coverage(bam_file, chr, start, end):
 
 def get_bam_aln(bam_file, chr, start, end):
     """Get aligned reads from a sorted bam file for within the given coords"""
-    
+
     import pysam
     if not os.path.exists(bam_file):
         return
@@ -164,6 +170,6 @@ def get_bam_aln(bam_file, chr, start, end):
     df['y'] = 1
     bins = (end-start)/150
     xbins = pd.cut(df.start,bins=bins)
-    df['y'] = df.groupby(xbins)['y'].transform(lambda x: x.cumsum())    
+    df['y'] = df.groupby(xbins)['y'].transform(lambda x: x.cumsum())
     #df['length'] = df.end-df.start
     return df

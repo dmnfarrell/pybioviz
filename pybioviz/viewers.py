@@ -113,6 +113,8 @@ def view_sequence_alignment(aln, fontsize="8pt"):
 def view_features(features, preview=True, view_range=None, fontsize="8pt", plot_width=800, plot_height=100):
     """Bokeh sequence alignment view"""
     
+    if features is None:
+        return figure(plot_width=plot_width,plot_height=60)
     df = utils.features_to_dataframe(features)#, cds=True)
     df = df[df.type!='region']
     #df['gene'] = df.gene.apply(lambda x: x.locus_tag)
@@ -186,4 +188,22 @@ def view_features(features, preview=True, view_range=None, fontsize="8pt", plot_
         p = gridplot([[p],[slider],[p1]], toolbar_location='below')
     else:
         p = p1
+    return p
+
+def view_coverage(df, plot_width=800):
+    """Plot a bam coverage dataframe returned from get_coverage"""
+    
+    if df is None:
+        return figure(plot_width=plot_width,plot_height=60,tools="")
+    source = ColumnDataSource(df)
+    x_range=(df.pos.min(),df.pos.max())
+    top = df.coverage.max()
+    p = figure(title=None, plot_width=plot_width, plot_height=60,
+               x_range=x_range, y_range=(0,top), tools="xwheel_zoom",
+               min_border=0, toolbar_location='right')
+    rects = Rect(x="pos", y=0, width=1, height="coverage", fill_color="gray", fill_alpha=0.3)
+    p.grid.visible = False
+    p.add_glyph(source, rects)
+    p.yaxis.visible = False
+    p.xaxis.visible = False
     return p

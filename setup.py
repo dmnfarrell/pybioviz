@@ -14,7 +14,8 @@ setup(
     author = 'Damien Farrell',
     author_email = 'farrell.damien@gmail.com',
     packages = ['pybioviz'],
-    package_data={'pybioviz': ['data/*.csv',
+    package_data={'pybioviz': ['data/*.aln',
+                  'notebooks/*.ipynb',
                   'templates/*.html',
                   'description.txt']
                  },

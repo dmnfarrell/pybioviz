@@ -20,6 +20,7 @@
 """
 
 import os,sys
+import numpy as np
 import pandas as pd
 from . import utils
 from bokeh.plotting import figure
@@ -30,13 +31,13 @@ import panel as pn
 
 def view_sequence_alignment(aln, fontsize="8pt"):
     """Bokeh sequence alignment view"""
-    
+      
     seqs = [rec.seq for rec in (aln)]
     ids = [rec.id for rec in aln]    
     #ids=range(len(seqs))
     text = [i for s in list(seqs) for i in s]
-    colors = get_colors(seqs)    
-    cons = get_cons(aln)
+    colors = utils.get_sequence_colors(seqs)    
+    cons = utils.get_cons(aln)
     N = len(seqs[0])
     S = len(seqs)    
     width=.4

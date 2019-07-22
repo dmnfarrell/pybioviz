@@ -22,12 +22,15 @@
 import os,sys
 import pandas as pd
 
+module_path = os.path.dirname(os.path.abspath(__file__)) #path to module
+datadir = os.path.join(module_path, 'data')
+templatedir = os.path.join(module_path, 'templates')
 featurekeys = ['type','protein_id','locus_tag','gene','db_xref',
                'product', 'note', 'translation','pseudo','start','end','strand']
 
 def get_template():
 
-    f=open('../pybioviz/templates/base.html','r')
+    f=open(os.path.join(templatedir, 'base.html'),'r')
     tmpl = ''.join(f.readlines())
     return tmpl
 

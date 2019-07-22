@@ -19,7 +19,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
-import os,sys
+import os,sys,subprocess
 import pandas as pd
 from . import viewers, utils
 
@@ -31,8 +31,13 @@ def main():
     parser = OptionParser()
     parser.add_option("-b", "--bam-viewer", dest="bam",  action="store_true",
                         default=False, help="Run bam viewer")
-
+    parser.add_option("-t", "--test", dest="test",  action="store_true",
+                        default=False, help="Do tests")
+    opts, remainder = parser.parse_args()
     if opts.bam is True:
-        cmd = panel
+        cmd = 'panel serve'
+    elif opts.test is True:
+        cmd = 'panel serve notebooks/tests.ipynb'
+        subprocess.check_output(cmd, shell=True)
 if __name__ == '__main__':
     main()

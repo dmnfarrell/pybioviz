@@ -34,9 +34,29 @@ def get_template():
     tmpl = ''.join(f.readlines())
     return tmpl
 
-def muscle_alignment(seqs):
-    """Align 2 sequences with muscle"""
+def get_css():
+    """get custom css"""
+    
+    f=open(os.path.join(templatedir, 'custom.css'),'r')
+    s=''.join(f.readlines())
+    return s
 
+def clustal_alignment(seqs):
+    """Align 2 sequences with clustal"""
+    
+    from Bio import SeqIO, AlignIO
+    SeqIO.write(seqs, filename, "fasta")
+    name = os.path.splitext(filename)[0]
+    from Bio.Align.Applications import ClustalwCommandline
+    cline = ClustalwCommandline(command, infile=filename)
+    stdout, stderr = cline()
+    align = AlignIO.read(name+'.aln', 'clustal')
+    return align
+
+def muscle_alignment(seqs):
+    """Align sequences with muscle"""
+
+    from Bio import SeqIO, AlignIO
     filename = 'temp.faa'
     SeqIO.write(seqs, filename, "fasta")
     name = os.path.splitext(filename)[0]
@@ -79,14 +99,18 @@ def get_cons(aln):
     return x
 
 def get_cds(df):
-    """Get CDS with translations from genbank dataframe"""
+    """Get CDS with translations from genbank dataframe.
+    Args: pandas dataframe
+    """
 
     cds = df[df.type=='CDS']
     cdstrans = cds[cds.translation.notnull()]
     return cdstrans
 
 def check_tags(df):
-    """Check genbank tags to make sure they are not empty"""
+    """Check genbank tags to make sure they are not empty.
+    Args: pandas dataframe
+    """
 
     def replace(x):
         if pd.isnull(x.locus_tag):
@@ -97,8 +121,10 @@ def check_tags(df):
     return df
 
 def features_to_dataframe(features, cds=False):
-    """Get a genome record from a biopython features object into a dataframe
-       returns a dataframe with a row for each cds/entry.
+    """Get features from a biopython seq record object into a dataframe
+    Args:
+        features: bio seqfeatures
+       returns: a dataframe with a row for each cds/entry.
       """
 
     #preprocess features
@@ -132,7 +158,7 @@ def features_to_dataframe(features, cds=False):
                'in the translation qualifier of each protein feature.' )
     return df
 
-def get_features(gff_file):
+def gff_to_features(gff_file):
     """Get features from gff file"""
 
     if not os.path.exists(gff_file):

@@ -29,9 +29,12 @@ from bokeh.models.glyphs import Text, Rect
 from bokeh.layouts import gridplot, column
 import panel as pn
 
-def view_sequence_alignment(aln, fontsize="8pt"):
-    """Bokeh sequence alignment view"""
-      
+def view_sequence_alignment(aln, fontsize="8pt", plot_width=800):
+    """Bokeh sequence alignment viewer.
+    Args:
+        aln: biopython Multiple Sequence Alignment        
+    """
+    
     seqs = [rec.seq for rec in (aln)]
     ids = [rec.id for rec in aln]    
     #ids=range(len(seqs))
@@ -65,7 +68,7 @@ def view_sequence_alignment(aln, fontsize="8pt"):
     #box_select = BoxSelectTool(callback=callback_select)
 
     #entire sequence view (no text, with zoom)
-    p = figure(title=None, plot_width=800, plot_height=50, x_range=x_range, y_range=(0,S), tools=tools, 
+    p = figure(title=None, plot_width=plot_width, plot_height=50, x_range=x_range, y_range=(0,S), tools=tools, 
                     min_border=0, toolbar_location='below')
     rects = Rect(x="x", y="recty",  width=1, height=1, fill_color="colors", line_color=None, fill_alpha=0.6)
     p.add_glyph(source, rects)
@@ -74,7 +77,7 @@ def view_sequence_alignment(aln, fontsize="8pt"):
     p.grid.visible = False  
     
     #sequence text view, zoom fixed
-    p1 = figure(title=None, plot_width=800, plot_height=plot_height, x_range=view_range, y_range=ids, tools="xpan,reset", 
+    p1 = figure(title=None, plot_width=plot_width, plot_height=plot_height, x_range=view_range, y_range=ids, tools="xpan,reset", 
                     min_border=0, toolbar_location='below')#, lod_factor=1)          
     glyph = Text(x="x", y="y", text="text", text_align='center',text_color="black", text_font="monospace",text_font_size=fontsize)
     rects = Rect(x="x", y="recty",  width=1, height=1, fill_color="colors", line_color=None, fill_alpha=0.4)
@@ -89,7 +92,7 @@ def view_sequence_alignment(aln, fontsize="8pt"):
     
     source2 = ColumnDataSource(dict(x=x, cons=cons))
     
-    p3 = figure(title=None, plot_width=800, plot_height=30, x_range=p1.x_range, y_range=(Range1d(min(cons),.5)), tools="xpan")
+    p3 = figure(title=None, plot_width=plot_width, plot_height=30, x_range=p1.x_range, y_range=(Range1d(min(cons),.5)), tools="xpan")
     rects2 = Rect(x="x", y=0,  width=1, height="cons", fill_color="gray", line_color=None, fill_alpha=0.7)
     p3.add_glyph(source2, rects2)
     

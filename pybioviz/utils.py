@@ -19,7 +19,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
-import os,sys
+import os,sys,random,subprocess
 import pandas as pd
 
 module_path = os.path.dirname(os.path.abspath(__file__)) #path to module
@@ -29,7 +29,7 @@ featurekeys = ['type','protein_id','locus_tag','gene','db_xref',
                'product', 'note', 'translation','pseudo','start','end','strand']
 
 def get_template():
-
+    
     f=open(os.path.join(templatedir, 'base.html'),'r')
     tmpl = ''.join(f.readlines())
     return tmpl
@@ -40,6 +40,26 @@ def get_css():
     f=open(os.path.join(templatedir, 'custom.css'),'r')
     s=''.join(f.readlines())
     return s
+
+def align_nucmer(file1, file2):
+    """
+    Align two fasta files with nucmer
+    Returns: pandas dataframe of coords
+    """
+    
+    cmd='nucmer --maxgap=500 --mincluster=100 --coords -p nucmer %s %s' %(file1, file2)
+    print (cmd)
+    subprocess.check_output(cmd,shell=True)
+    df = read_nucmer_coords('nucmer.coords')
+    return df
+
+def read_nucmer_coords(cfile):
+    """Read nucmer coords file into dataframe."""
+    
+    cols=['S1','E1','S2','E2','LEN 1','LEN 2','IDENT','TAG1','TAG2']
+    a=pd.read_csv(cfile,sep='[\s|]+',skiprows=5,names=cols,engine='python')
+    a = a.sort_values(by='TAG2',ascending=False)
+    return a
 
 def clustal_alignment(seqs):
     """Align 2 sequences with clustal"""
@@ -65,6 +85,13 @@ def muscle_alignment(seqs):
     stdout, stderr = cline()
     align = AlignIO.read(name+'.txt', 'fasta')
     return align
+
+def random_colors(size, seed=None):
+    """random list of html colors of length sizes"""
+    random.seed = seed
+    colors = ["#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
+                for i in range(size)]
+    return colors
 
 def get_sequence_colors(seqs):
     """Get colors for a sequence"""

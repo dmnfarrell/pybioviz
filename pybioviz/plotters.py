@@ -28,6 +28,7 @@ from bokeh.models import ColumnDataSource, Plot, LinearAxis, Grid, Range1d,Custo
 from bokeh.models.glyphs import Text, Rect
 from bokeh.layouts import gridplot, column
 import panel as pn
+from . import utils
 
 def test_plot(rows=20, cols=100):
     """Bokeh random colors plot"""
@@ -38,8 +39,7 @@ def test_plot(rows=20, cols=100):
     gx = xx.ravel()
     gy = yy.flatten()
     
-    colors = ["#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
-             for i in range(len(gx))]
+    colors = utils.random_colors(len(gx))
     source = ColumnDataSource(dict(x=gx, y=gy, color=colors))    
     plot_height = 50
     x_range = Range1d(0,10, bounds='auto')

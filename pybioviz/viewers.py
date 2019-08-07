@@ -175,7 +175,7 @@ def view_features(features, preview=True, view_range=None, fontsize="8pt", plot_
         #entire sequence view (no text, with zoom)
         p = figure(title=None, plot_width=plot_width, plot_height=100, x_range=x_range, y_range=(-2,2), tools=tools, 
                         min_border=0, toolbar_location='below')
-        rects = Rect(x="x", y="strand", width="length", height=.4, fill_color="colors", line_color='black', fill_alpha=0.6)
+        rects = Rect(x="x", y="strand", width="length", height=.4, fill_color="color", line_color='black', fill_alpha=0.6)
         p.add_glyph(source, rects)
         p.yaxis.visible = False
         p.grid.visible = False

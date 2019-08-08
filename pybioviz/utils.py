@@ -86,7 +86,7 @@ def muscle_alignment(seqs):
     align = AlignIO.read(name+'.txt', 'fasta')
     return align
 
-def random_colors(size, seed=None):
+def random_colors(size, seed=30):
     """random list of html colors of length sizes"""
     random.seed = seed
     colors = ["#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
@@ -176,6 +176,7 @@ def features_to_dataframe(features, cds=False):
     df['length'] = df.translation.astype('str').str.len()
     #print (df)
     df = check_tags(df)
+    df['gene'] = df.gene.fillna(df.locus_tag)
     if cds == True:
         df = get_cds(df)
         df['order'] = range(1,len(df)+1)

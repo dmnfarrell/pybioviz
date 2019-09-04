@@ -201,7 +201,7 @@ def get_coverage(bam_file, chr, start, end):
     """Get coverage from bam file at specified region"""
 
     import pysam
-    if not os.path.exists(bam_file):
+    if bam_file is None or not os.path.exists(bam_file):
         return
     samfile = pysam.AlignmentFile(bam_file, "r")
     vals = [(pileupcolumn.pos, pileupcolumn.n) for pileupcolumn in samfile.pileup(chr, start, end)]

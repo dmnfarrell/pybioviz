@@ -69,7 +69,7 @@ def view_features(features=None):
         xrange = slider.value
         loc_input.value = str(xrange[0])+':'+str(xrange[1])
         #p1 = annot_pane.object = preview(features)
-        feature_pane.object = plot_features(features,preview=False,x_range=xrange, plot_width=900)
+        feature_pane.object = plotters.plot_features(features,preview=False,x_range=xrange, plot_width=900)
         return
 
     slider.param.watch(update,'value')

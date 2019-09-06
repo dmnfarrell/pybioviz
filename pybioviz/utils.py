@@ -20,6 +20,10 @@
 """
 
 import os,sys,random,subprocess
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
+from Bio.Align import MultipleSeqAlignment
+from Bio import AlignIO, SeqIO
 import pandas as pd
 
 module_path = os.path.dirname(os.path.abspath(__file__)) #path to module
@@ -186,10 +190,16 @@ def features_to_dataframe(features, cds=False):
                'in the translation qualifier of each protein feature.' )
     return df
 
+def genbank_to_features(gb_file):
+    if gb_file is None or not os.path.exists(gb_file):
+        return
+    rec = list(SeqIO.parse(open(gb_file,'r'),'genbank'))[0]
+    return rec.features
+
 def gff_to_features(gff_file):
     """Get features from gff file"""
 
-    if not os.path.exists(gff_file):
+    if gff_file is None or not os.path.exists(gff_file):
         return
     from BCBio import GFF
     in_handle = open(gff_file,'r')
@@ -204,12 +214,13 @@ def get_coverage(bam_file, chr, start, end):
     if bam_file is None or not os.path.exists(bam_file):
         return
     samfile = pysam.AlignmentFile(bam_file, "r")
-    vals = [(pileupcolumn.pos, pileupcolumn.n) for pileupcolumn in samfile.pileup(chr, start, end)]
+    vals = [(pileupcolumn.pos, pileupcolumn.n) for pileupcolumn in samfile.pileup(chr, start-200, end+200)]
     df = pd.DataFrame(vals,columns=['pos','coverage'])
+    df = df[(df.pos>=start) & (df.pos<=end)]
     return df
 
 def get_bam_aln(bam_file, chr, start, end):
-    """Get aligned reads from a sorted bam file for within the given coords"""
+    """Get all aligned reads from a sorted bam file for within the given coords"""
 
     import pysam
     if not os.path.exists(bam_file):
@@ -226,7 +237,21 @@ def get_bam_aln(bam_file, chr, start, end):
     #df = df.assign(y=df.groupby('start').start.apply(lambda x: pd.Series(range(len(x)))).values)
     df['y'] = 1
     bins = (end-start)/150
+    if bins < 1:
+        bins = 1
     xbins = pd.cut(df.start,bins=bins)
     df['y'] = df.groupby(xbins)['y'].transform(lambda x: x.cumsum())
     #df['length'] = df.end-df.start
     return df
+
+def get_chrom(filename):
+    """Get first sequence name in a bam file"""
+    
+    if filename is None:
+        return ''
+    import pysam
+    samfile = pysam.AlignmentFile(filename, "r")
+    iter=samfile.fetch(start=0,end=10)
+    for read in iter:
+        if read.reference_name:
+            return read.reference_name

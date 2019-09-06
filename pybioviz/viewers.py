@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-    Implements sequence viewers for pybioviz
+    Implements viewers/panel apps for pybioviz
     Created June 2019
     Copyright (C) Damien Farrell
 
@@ -32,7 +32,7 @@ import panel.widgets as pnw
 
 
 def view_features(features=None):
-    """gene feature viewer app"""
+    """Genome feature viewer app"""
     
     #features = utils.gff_to_features('Mbovis_AF212297.gff')
     gff_input = pnw.TextInput(name='gff file',value='')

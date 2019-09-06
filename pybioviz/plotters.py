@@ -204,8 +204,8 @@ def plot_features(features, preview=True, x_range=None, fontsize="8pt", plot_wid
         tags = Text(x="x", y="y", y_offset=-10, text="gene", text_align='center',text_color="black", 
                      text_font="monospace",text_font_size=fontsize, name="genetext")
     rects = Rect(x="x", y="y", width="length", height=.4, fill_color="color", fill_alpha=0.4, name='rects')
-    arr = Arrow(source=source, x_start="start", x_end="end_x", y_start="y", y_end="y", 
-                line_color="black", name='arrows', end=NormalHead(size=10))    
+    arr = Arrow(source=source, x_start="start", x_end="end_x", y_start="y", y_end="y",
+                line_color="gray", name='arrows', end=NormalHead(size=8))    
     p1.add_glyph(source, rects)
     p1.add_glyph(source, tags)
     p1.add_layout(arr)

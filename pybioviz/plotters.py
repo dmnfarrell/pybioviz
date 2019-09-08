@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 from . import utils
 from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource, Plot, LinearAxis, Grid, Range1d,CustomJS, Slider, HoverTool, NumeralTickFormatter, Arrow, NormalHead
+from bokeh.models import ColumnDataSource, Plot, LinearAxis, Grid, Range1d,CustomJS, Slider, HoverTool, NumeralTickFormatter, Arrow, NormalHead, Label
 from bokeh.models.glyphs import Text, Rect
 from bokeh.layouts import gridplot, column
 import panel as pn
@@ -55,22 +55,44 @@ def test_plot(rows=20, cols=100):
     p = gridplot([[p]], toolbar_location='below')
     return p
 
-def plot_coverage(df, plot_width=800):
+def plot_empty(msg='', plot_width=600, plot_height=200):
+    """Return an empty bokeh plot with optional text displayed"""
+    
+    p = figure(plot_width=plot_width,plot_height=plot_height,tools="",x_range=(0,1),y_range=(0,2))
+    text = Label(x=.3, y=1, text=msg)
+    p.add_layout(text)
+    p.grid.visible = False
+    p.toolbar.logo = None
+    p.xaxis.visible = False
+    p.yaxis.visible = False
+    return p
+
+def plot_coverage(df, plot_width=800, plot_height=60):
     """Plot a bam coverage dataframe returned from get_coverage"""
     
-    if df is None:
-        return figure(plot_width=plot_width,plot_height=60,tools="")
+    if df is None or len(df)==0:
+        return plot_empty(plot_width=plot_width,plot_height=plot_height)
+    df['y'] = df.coverage/2
     source = ColumnDataSource(df)
-    x_range=(df.pos.min(),df.pos.max())
+    x_range = (df.pos.min(),df.pos.max())
     top = df.coverage.max()
-    p = figure(title=None, plot_width=plot_width, plot_height=60,
-               x_range=x_range, y_range=(0,top), tools="xwheel_zoom",
+    print (top)
+    hover = HoverTool(
+        tooltips=[            
+            ("pos", "@pos"),
+            ("coverage", "@coverage")
+        ], point_policy='follow_mouse') 
+    p = figure(title=None, plot_width=plot_width, plot_height=plot_height,
+               x_range=x_range, y_range=(0,top), tools=[hover],
                min_border=0, toolbar_location='right')
-    rects = Rect(x="pos", y=0, width=1, height="coverage", fill_color="gray", fill_alpha=0.3)
-    p.grid.visible = False
+    rects = Rect(x="pos", y="y", width=1, height="coverage", fill_color="gray", fill_alpha=0.3)    
+    
     p.add_glyph(source, rects)
+
+    p.grid.visible = False
     p.yaxis.visible = False
     p.xaxis.visible = False
+    p.toolbar.logo = None
     return p
 
 def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800):

@@ -24,6 +24,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Align import MultipleSeqAlignment
 from Bio import AlignIO, SeqIO
+from pyfaidx import Fasta
 import pandas as pd
 
 module_path = os.path.dirname(os.path.abspath(__file__)) #path to module
@@ -217,31 +218,55 @@ def get_coverage(bam_file, chr, start, end):
     vals = [(pileupcolumn.pos, pileupcolumn.n) for pileupcolumn in samfile.pileup(chr, start-200, end+200)]
     df = pd.DataFrame(vals,columns=['pos','coverage'])
     df = df[(df.pos>=start) & (df.pos<=end)]
+    #fill with zeroes if there is no data at ends
+    if df.pos.max() < end:
+        new = pd.DataFrame({'pos':range(df.pos.max(), 1760)})
+        new['coverage'] = 0
+        df = df.append(new).reset_index(drop=True)
     return df
 
-def get_bam_aln(bam_file, chr, start, end):
+def get_bam_ref_name(bam_file):
+    """Get first ref name in bam file"""
+    
+    import pysam
+    samfile = pysam.AlignmentFile(bam_file, "r")
+    try:
+        aln = samfile.fetch()
+    except ValueError:
+        return 
+    for a in aln:
+        chr = samfile.get_reference_name(a.next_reference_id)
+        if chr != None:
+            break    
+    return chr
+
+def get_bam_aln(bam_file, chr, start, end, group=True):
     """Get all aligned reads from a sorted bam file for within the given coords"""
 
     import pysam
     if not os.path.exists(bam_file):
         return
+    if chr is None:
+        return
+    if start<1:
+        start=0    
     samfile = pysam.AlignmentFile(bam_file, "r")
     iter = samfile.fetch(chr, start, end)
     d=[]
     for read in iter:
-        st = read.reference_start
-        #print (read.reference_start )
+        st = read.reference_start        
         d.append([read.reference_start, read.reference_end, read.cigarstring,
                   read.query_name,read.query_length,read.mapping_quality])
     df = pd.DataFrame(d,columns=['start','end','cigar','name','length','mapq'])
-    #df = df.assign(y=df.groupby('start').start.apply(lambda x: pd.Series(range(len(x)))).values)
+    if group == True:
+        df['counts'] = df.groupby(['start','end']).name.transform('count')
+        df = df.drop_duplicates(['start','end'])
     df['y'] = 1
     bins = (end-start)/150
     if bins < 1:
         bins = 1
     xbins = pd.cut(df.start,bins=bins)
-    df['y'] = df.groupby(xbins)['y'].transform(lambda x: x.cumsum())
-    #df['length'] = df.end-df.start
+    df['y'] = df.groupby(xbins)['y'].transform(lambda x: x.cumsum())    
     return df
 
 def get_chrom(filename):
@@ -251,7 +276,18 @@ def get_chrom(filename):
         return ''
     import pysam
     samfile = pysam.AlignmentFile(filename, "r")
-    iter=samfile.fetch(start=0,end=10)
+    try:
+        iter=samfile.fetch(start=0,end=10)
+    except ValueError:
+        return
     for read in iter:
         if read.reference_name:
             return read.reference_name
+        
+def get_fasta_length(filename):
+    """Get length of reference sequence"""
+
+    refseq = Fasta(filename)
+    key = list(refseq.keys())[0]
+    l = len(refseq[key])
+    return l

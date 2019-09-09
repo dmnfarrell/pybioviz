@@ -1,18 +1,16 @@
-Introduction
-============
+Description
+===========
+
+This toolkit is to provide bioinformatic visualization tools to be used inside Jupyter notebooks or in standalone web pages.
 
 
-Current Features
-================
-
-* add, remove rows and columns
 
 
 
 Links
 =====
 
-
+* https://github.com/dmnfarrell/pybioviz
 
 Citation
 ========
@@ -24,11 +22,16 @@ Farrell, D 2019
 Installation
 ============
 
-    pip install pandastable
+    pip install pybioviz
 
-**Dependencies**
+Dependencies
+++++++++++++
 
 * numpy
 * pandas
 * panel
 * bokeh
+* biopython
+* pyfaidx
+* pysam
+* bcbio_gff

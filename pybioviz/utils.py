@@ -284,6 +284,16 @@ def get_chrom(filename):
         if read.reference_name:
             return read.reference_name
         
+def get_fasta_sequence(filename, start, end, key=0):
+    """Get chunk of indexed fasta sequence at start/end points"""
+    
+    from pyfaidx import Fasta
+    refseq = Fasta(filename)
+    if type(key) is int:
+        chrom = list(refseq.keys())[key]   
+    seq = refseq[chrom][start:end].seq
+    return seq
+
 def get_fasta_length(filename):
     """Get length of reference sequence"""
 

@@ -24,6 +24,7 @@ setup(
                       'biopython>=1.5',
                       'panel>=0.6.0',
                       'bokeh>0.12',
+                      'pyfaidx>0.5',
                       'pysam>0.15',
                       'bcbio_gff',
                       'future'],

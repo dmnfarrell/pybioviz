@@ -67,8 +67,14 @@ def plot_empty(msg='', plot_width=600, plot_height=200):
     p.yaxis.visible = False
     return p
 
-def plot_coverage(df, plot_width=800, plot_height=60):
-    """Plot a bam coverage dataframe returned from get_coverage"""
+def plot_coverage(df, plot_width=800, plot_height=60, xaxis=True):
+    """Plot a bam coverage dataframe returned from get_coverage
+    
+    Args:
+        df: dataframe of coverage data (from get_coverage)
+        plot_width: width of plot
+        xaxis: plot the x-axis ticks and labels
+    """
     
     if df is None or len(df)==0:
         return plot_empty(plot_width=plot_width,plot_height=plot_height)
@@ -91,12 +97,52 @@ def plot_coverage(df, plot_width=800, plot_height=60):
 
     p.grid.visible = False
     p.yaxis.visible = False
-    p.xaxis.visible = False
+    if xaxis==False:
+        p.xaxis.visible = False
+    p.toolbar.logo = None
+    return p
+
+def plot_sequence(seq, plot_width=1000, plot_height=20, fontsize='10pt', xaxis=True, tools=""):
+    """Plot a single sequence.
+    
+    Args:
+        seq: sequence to plot, a string
+        xaxis: display x-axis tick labels or not
+        tools: which bokeh tools to display, if needed
+    """
+    
+    if seq is None or len(seq)==0:
+        return plotters.plot_empty('no sequence',plot_width=plot_width,plot_height=plot_height)
+    text = list(seq)    
+    N = len(seq)
+    x = np.array(range(N))+1
+    
+    colors = utils.get_sequence_colors([seq])    
+    source = ColumnDataSource(dict(x=x, text=text, colors=colors))  
+    x_range = Range1d(0,N, bounds='auto') 
+    p = figure(plot_width=plot_width, plot_height=plot_height, x_range=x_range, y_range=(0,1), 
+               tools=tools, min_border=0, toolbar_location='below')    
+    rects = Rect(x="x", y=0,  width=1, height=2, fill_color="colors", line_color=None, fill_alpha=0.4)
+    p.add_glyph(source, rects)
+    if len(seq)<200:
+        glyph = Text(x="x", y=0, text="text", text_align='center', text_color="black", 
+                     text_font="monospace", text_font_size=fontsize)    
+        p.add_glyph(source, glyph)
+    p.grid.visible = False
+    if xaxis == False:
+        p.xaxis.visible = False
+    else:
+        if plot_height<40:
+            p.plot_height = 50
+        if tools != "":
+            p.plot_height = 70
+    p.yaxis.visible = False
     p.toolbar.logo = None
     return p
 
 def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800):
     """Bokeh sequence alignment viewer.
+    
     Args:
         aln: biopython Multiple Sequence Alignment        
     """
@@ -141,6 +187,7 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800):
     #p.xaxis.visible = False
     p.yaxis.visible = False
     p.grid.visible = False  
+    p.toolbar.logo = None
     
     #sequence text view, zoom fixed
     p1 = figure(title=None, plot_width=plot_width, plot_height=plot_height, x_range=view_range, y_range=ids, tools="xpan,reset", 
@@ -150,8 +197,7 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800):
     p1.add_glyph(source, glyph)
     p1.add_glyph(source, rects)
             
-    p1.grid.visible = False
-    p.toolbar.logo = None
+    p1.grid.visible = False    
     p1.xaxis.major_label_text_font_style = "bold"
     p1.yaxis.minor_tick_line_width = 0
     p1.yaxis.major_tick_line_width = 0
@@ -177,11 +223,13 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800):
     slider = Slider (start=0, end=N, value=1, step=10)
     slider.js_on_change('value', callback)
     
-    p = gridplot([[p],[slider],[p3],[p1]], toolbar_location='below')
+    p = gridplot([[p],[slider],[p3],[p1]], toolbar_location='below')    
     return p
 
 def plot_features(features, preview=True, x_range=None, fontsize="8pt", plot_width=800, plot_height=150):
-    """Bokeh sequence alignment view"""
+    """Bokeh sequence alignment view
+    
+    """
     
     df = utils.features_to_dataframe(features)#, cds=True)
     df = df[df.type!='region']    
@@ -260,4 +308,57 @@ def plot_features(features, preview=True, x_range=None, fontsize="8pt", plot_wid
         p = gridplot([[p],[slider],[p1]], toolbar_location='below')
     else:
         p = p1
+    return p
+
+def plot_bam_alignment(bam_file, chr, start, end, height=50, fontsize="12pt", plot_width=800, plot_height=250, fill_color='gray'):
+    """Bokeh bam alignments plotter.
+    Args:
+        bam_file: name of a sorted bam file
+        start: start of range to show
+        end: end of range        
+    """
+    
+    if bam_file is None:
+        return plotters.plot_empty('no bam file',plot_width=plot_width, plot_height=plot_height)
+    
+    h=.6+height/plot_height
+    #get outer ranges to retrieve reads from so that we
+    #cover the visible range from start-end
+    o = (end-start)/2
+    #get reads in range into a dataframe
+    df = utils.get_bam_aln(bam_file, chr, start-o, end+o)
+    if df is None:
+        p = plotters.plot_empty('no bam file or bam not indexed')
+        return p
+    #offset for rects
+    df['x'] = df.start+df.length/2
+    #set colors by quality
+    df['color'] = df.apply(lambda x: 'red' if x.mapq==0 else fill_color ,1)
+    df['span'] = df.apply(lambda x: str(x.start)+':'+str(x.end),1)
+    print (len(df))
+    
+    source = ColumnDataSource(df)
+    x_range=(start, end)
+    hover = HoverTool(
+        tooltips=[            
+            ("name", "@name"),
+            ("cigar", "@cigar"),
+            ("span", "@span"),
+            ("length", "@length"),
+            ("mapq", "@mapq"),
+            ("counts", "@counts")
+        ],
+        point_policy='follow_mouse',
+    )
+    tools=[hover,"ypan","save"]
+    
+    p = figure(title=None, plot_width=plot_width, plot_height=plot_height, x_range=x_range, y_range=(0,height), tools=tools, 
+                    min_border=0, toolbar_location='right')
+    rects = Rect(x="x", y="y", width="length", height=h, fill_color="color", line_color='gray',fill_alpha=0.4)
+    #if start-end > 100:
+    p.ygrid.visible = False
+    p.add_glyph(source, rects)
+    p.yaxis.visible = False
+    p.xaxis.formatter = NumeralTickFormatter(format="(0,0)")
+    p.toolbar.logo = None
     return p

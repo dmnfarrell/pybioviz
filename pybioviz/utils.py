@@ -220,7 +220,7 @@ def get_coverage(bam_file, chr, start, end):
     df = df[(df.pos>=start) & (df.pos<=end)]
     #fill with zeroes if there is no data at ends
     if df.pos.max() < end:
-        new = pd.DataFrame({'pos':range(df.pos.max(), 1760)})
+        new = pd.DataFrame({'pos':range(df.pos.max(), end)})
         new['coverage'] = 0
         df = df.append(new).reset_index(drop=True)
     return df

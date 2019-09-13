@@ -226,9 +226,13 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800):
     p = gridplot([[p],[slider],[p3],[p1]], toolbar_location='below')    
     return p
 
-def plot_features(features, preview=True, x_range=None, fontsize="8pt", plot_width=800, plot_height=150):
-    """Bokeh sequence alignment view
+def plot_features(features, preview=True, start=0, end=10000, fontsize="8pt", plot_width=800, plot_height=150):
+    """Bokeh sequence alignment view.
     
+    Args:
+        features: BioPython SeqFeatures
+        start: start location
+        end: end location, 0 means show all features
     """
     
     df = utils.features_to_dataframe(features)#, cds=True)
@@ -249,12 +253,12 @@ def plot_features(features, preview=True, x_range=None, fontsize="8pt", plot_wid
 
     source = ColumnDataSource(df)    
         
-    viewlen=5000
-    if x_range == None:
-        x_range = (0,viewlen)
-    else:
-        #viewlen = int(x_range[1])-int(x_range[0])
-        print (x_range,viewlen)    
+    viewlen=end
+    
+    x_range = (start,end)
+    #else:
+    #    #viewlen = int(x_range[1])-int(x_range[0])
+    #    print (x_range,viewlen)    
 
     hover = HoverTool(
         tooltips=[            

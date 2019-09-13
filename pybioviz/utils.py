@@ -240,7 +240,7 @@ def get_bam_ref_name(bam_file):
             break    
     return chr
 
-def get_bam_aln(bam_file, chr, start, end, group=True):
+def get_bam_aln(bam_file, chr, start, end, group=False):
     """Get all aligned reads from a sorted bam file for within the given coords"""
 
     import pysam
@@ -258,6 +258,8 @@ def get_bam_aln(bam_file, chr, start, end, group=True):
         d.append([read.reference_start, read.reference_end, read.cigarstring,
                   read.query_name,read.query_length,read.mapping_quality])
     df = pd.DataFrame(d,columns=['start','end','cigar','name','length','mapq'])
+    if len(df) == 0:
+        return pd.DataFrame()
     if group == True:
         df['counts'] = df.groupby(['start','end']).name.transform('count')
         df = df.drop_duplicates(['start','end'])

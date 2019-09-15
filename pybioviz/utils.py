@@ -94,6 +94,7 @@ def muscle_alignment(seqs):
 def random_colors(size, seed=30):
     """random list of html colors of length sizes"""
     random.seed = seed
+    
     colors = ["#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
                 for i in range(size)]
     return colors
@@ -163,8 +164,8 @@ def features_to_dataframe(features, cds=False):
     allfeat = []
     for (item, f) in enumerate(features):
         x = f.__dict__
-        q = f.qualifiers
-        x.update(q)
+        quals = f.qualifiers
+        x.update(quals)
         d = {}
         d['start'] = f.location.start
         d['end'] = f.location.end
@@ -176,7 +177,7 @@ def features_to_dataframe(features, cds=False):
                 else:
                     d[i] = x[i]
         allfeat.append(d)
-
+    #featurekeys = list(quals.keys())+['start','end','strand','translation']
     df = pd.DataFrame(allfeat,columns=featurekeys)
     df['length'] = df.translation.astype('str').str.len()
     #print (df)

@@ -226,23 +226,30 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800):
     p = gridplot([[p],[slider],[p3],[p1]], toolbar_location='below')    
     return p
 
-def plot_features(features, preview=True, start=0, end=10000, fontsize="8pt", plot_width=800, plot_height=150):
-    """Bokeh sequence alignment view.
-    
-    Args:
-        features: BioPython SeqFeatures
-        start: start location
-        end: end location, 0 means show all features
-    """
+def plot_features(features, start=0, end=10000, fontsize="8pt", plot_width=800, plot_height=150,
+                  tools="xpan, xwheel_zoom, save", color='#abdda4'):
+    """Bokeh sequence alignment view"""
     
     df = utils.features_to_dataframe(features)#, cds=True)
     df = df[df.type!='region']    
     df['length'] = df.end-df.start
     df['level'] = 1
-    df['color'] = utils.random_colors(len(df)) #'green'
+    #df['color'] = random_colors(len(df)) #'green'
     df['x'] = df.start+df.length/2
-    df['end_x'] = df.start+50
-    df['y'] = [random.choice(range(1,6)) for i in range(len(df))]
+    
+    def get_arrow(x):
+        if x.strand == 1:
+            return x.end
+        else:
+            return x.start
+
+    df['arrow_start'] = df.apply(get_arrow,1)
+    df['arrow_end'] = df.apply(lambda x: x.arrow_start+50 if x.strand==1 else x.arrow_start-50, 1)
+    
+    def get_y(x):
+        df['col'].shift()
+    np.random.seed(8) 
+    df['y'] = np.random.randint(1,9, len(df))
     
     #print (df[:3])
     text = df.gene
@@ -251,67 +258,46 @@ def plot_features(features, preview=True, start=0, end=10000, fontsize="8pt", pl
     x = list(df.start+df.length/2)
     h = 20
 
-    source = ColumnDataSource(df)    
-        
-    viewlen=end
-    
-    x_range = (start,end)
-    #else:
-    #    #viewlen = int(x_range[1])-int(x_range[0])
-    #    print (x_range,viewlen)    
-
+    source = ColumnDataSource(df)
+    x_range = (start,end)  
+    viewlen = end-start
     hover = HoverTool(
         tooltips=[            
             ("gene", "@gene"),     
             ("locus_tag", "@locus_tag"),
-            ("protein_id", "@protein_id"), 
+            #("protein_id", "@protein_id"), 
+            ("strand", "@strand"),
             ("length", "@length"),             
-        ],
-        #names=['rects']
+        ],        
     )  
-    tools=[hover,"xpan, xwheel_zoom, save"]
+    tools=[hover, tools]
     
     #sequence text view with ability to scroll along x axis
-    p1 = figure(title=None, plot_width=plot_width, plot_height=plot_height, x_range=x_range,
+    p = figure(title=None, plot_width=plot_width, plot_height=plot_height, x_range=x_range,
                 y_range=(0,10), tools=tools, min_border=0, toolbar_location='right')#, lod_factor=1)
+    #display text only at certain zoom level
     if viewlen<30000:
-        tags = Text(x="x", y="y", y_offset=-10, text="gene", text_align='center',text_color="black", 
+        tags = Text(x="x", y="y", y_offset=-5, text="gene", text_align='center',text_color="black", 
                      text_font="monospace",text_font_size=fontsize, name="genetext")
-    rects = Rect(x="x", y="y", width="length", height=.4, fill_color="color", fill_alpha=0.4, name='rects')
-    arr = Arrow(source=source, x_start="start", x_end="end_x", y_start="y", y_end="y",
-                line_color="gray", name='arrows', end=NormalHead(size=8))    
-    p1.add_glyph(source, rects)
-    p1.add_glyph(source, tags)
-    p1.add_layout(arr)
+        p.add_glyph(source, tags)
+    rects = Rect(x="x", y="y", width="length", height=.4, fill_color=color, fill_alpha=0.4, name='rects')
+    #add arrows
+    arr = Arrow(source=source, x_start="arrow_start", x_end="arrow_end", y_start="y", y_end="y", 
+                line_color="black", name='arrows', end=NormalHead(size=8))
+    p.add_glyph(source, rects)
     
-    p1.grid.visible = False
-    p1.yaxis.visible = False
-    p1.xaxis.major_label_text_font_style = "bold"
-    p1.yaxis.minor_tick_line_width = 0
-    p1.yaxis.major_tick_line_width = 0
-    p1.toolbar.logo = None
-    p1.xaxis.formatter = NumeralTickFormatter(format="(0,0)")
+    p.add_layout(arr)
     
-    if preview == True:
-        #entire sequence view (no text, with zoom)
-        p = figure(title=None, plot_width=plot_width, plot_height=100, x_range=x_range, y_range=(-2,2), tools=tools, 
-                        min_border=0, toolbar_location='below')
-        rects = Rect(x="x", y="strand", width="length", height=.4, fill_color="colors", line_color='black', fill_alpha=0.6)
-        p.add_glyph(source, rects)
-        p.yaxis.visible = False
-        p.grid.visible = False
+    p.grid.visible = False
+    p.yaxis.visible = False
+    p.xaxis.major_label_text_font_style = "bold"
+    p.yaxis.minor_tick_line_width = 0
+    p.yaxis.major_tick_line_width = 0
+    p.toolbar.logo = None
+    p.xaxis.formatter = NumeralTickFormatter(format="(0,0)")
+    #if drag_callback is not None:
+    #     source.on_change("selected", drag_callback)
 
-        jscode="""    
-        var start = cb_obj.value;    
-        x_range.setv({"start": start, "end": start+l})   
-        """
-        callback = CustomJS(
-            args=dict(x_range=p1.x_range,l=viewlen), code=jscode)
-        slider = Slider (start=1, end=N, value=1, step=100)
-        slider.js_on_change('value', callback)
-        p = gridplot([[p],[slider],[p1]], toolbar_location='below')
-    else:
-        p = p1
     return p
 
 def plot_bam_alignment(bam_file, chr, start, end, height=50, fontsize="12pt", plot_width=800, plot_height=250, fill_color='gray'):

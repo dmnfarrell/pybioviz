@@ -192,10 +192,12 @@ def features_to_dataframe(features, cds=False):
                'in the translation qualifier of each protein feature.' )
     return df
 
-def genbank_to_features(gb_file):
+def genbank_to_features(gb_file, key=0):
+    """Read genbank record features"""
+    
     if gb_file is None or not os.path.exists(gb_file):
         return
-    rec = list(SeqIO.parse(open(gb_file,'r'),'genbank'))[0]
+    rec = list(SeqIO.parse(open(gb_file,'r'),'genbank'))[key]
     return rec.features
 
 def gff_to_features(gff_file):

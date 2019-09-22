@@ -67,6 +67,30 @@ def plot_empty(msg='', plot_width=600, plot_height=200):
     p.yaxis.visible = False
     return p
 
+def dummy_plot(start=0,end=500,plot_width=1000,callback=None):
+    """Test plot with random rects"""
+    
+    from bokeh.models import BoxZoomTool
+    m=3    
+    length=end
+    x = np.arange(0,end,2)   
+    y = list(range(1,m)) * len(x)
+    y=y[:len(x)]
+    colors = utils.random_colors(len(y))
+    w = [random.random()*3 for i in x]
+    txt = [str(i) for i in range(len(x))]
+    source = ColumnDataSource({'x':x,'y':y,'w':w,'text':txt,'color':colors})
+    tools="xpan,xwheel_zoom,box_select"
+    p = figure(title=None, plot_width=plot_width, plot_height=200, x_range=(0,100),
+                y_range=(0,m), tools=tools, min_border=0, toolbar_location='right')
+    rects = Rect(x="x", y="y", width="w", height=.6, fill_color='color', fill_alpha=0.8, line_width=2, name='rects')
+    #t = Text(x="x", y="y", text='text', text_font_size='9pt')
+    p.add_glyph(source, rects)
+    tool = p.select(dict(type=BoxZoomTool))
+    tool.dimensions = ["width"]
+    p.toolbar.logo = None
+    return p
+
 def plot_coverage(df, plot_width=800, plot_height=60, xaxis=True):
     """Plot a bam coverage dataframe returned from get_coverage
 

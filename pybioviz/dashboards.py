@@ -30,6 +30,24 @@ from bokeh.layouts import gridplot, column
 import panel as pn
 import panel.widgets as pnw
 
+def test_app():
+    """Test dashboard"""
+    
+    def refresh(event):
+        plot1.object = plotters.test_plot(cols=col_sl.value,rows=row_sl.value)
+        plot2.object = plotters.dummy_plot(rows=row_sl.value)
+        return
+    from . import __version__
+    title = pn.pane.Markdown('# pybioviz v%s test plots' %__version__)
+    plot1 = pn.pane.Bokeh()   
+    plot2 = pn.pane.Bokeh()
+    col_sl = pnw.IntSlider(name='cols',value=30,start=5,end=200,step=1)
+    col_sl.param.watch(refresh, 'value')
+    row_sl = pnw.IntSlider(name='rows',value=10,start=5,end=100,step=1)
+    row_sl.param.watch(refresh, 'value')
+    col_sl.param.trigger('value')    
+    app = pn.Column(title,col_sl,row_sl,plot1,plot2)
+    return app
 
 def view_features(features=None):
     """Genome feature viewer app"""

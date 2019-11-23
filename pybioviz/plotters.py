@@ -45,14 +45,14 @@ def test_plot(rows=20, cols=100):
     x_range = Range1d(0,10, bounds='auto')
 
     #entire sequence view (no text, with zoom)
-    p = figure(title=None, plot_width=800, plot_height=200,
-                    tools="pan")
+    p = figure(title=None, plot_width=900, plot_height=300,
+                    tools="xpan,xwheel_zoom,save,reset")
     rects = Rect(x="x", y="y",  width=1, height=1, fill_color="color", line_width=0)
     p.add_glyph(source, rects)
     p.yaxis.visible = False
     p.grid.visible = False
-    #p.title('test bokeh plot')
-    p = gridplot([[p]], toolbar_location='below')
+    p.toolbar.logo = None
+    #p = gridplot([[p]], toolbar_location='right')
     return p
 
 def plot_empty(msg='', plot_width=600, plot_height=200):
@@ -67,11 +67,11 @@ def plot_empty(msg='', plot_width=600, plot_height=200):
     p.yaxis.visible = False
     return p
 
-def dummy_plot(start=0,end=500,plot_width=1000,callback=None):
-    """Test plot with random rects"""
+def dummy_plot(start=0,end=500,rows=3,plot_width=1000,callback=None):
+    """Plot with random rects for scroll testing"""
     
     from bokeh.models import BoxZoomTool
-    m=3    
+    m=rows   
     length=end
     x = np.arange(0,end,2)   
     y = list(range(1,m)) * len(x)
@@ -333,6 +333,7 @@ def plot_features(features, start=0, end=None, fontsize="8pt", plot_width=800, p
 
 def plot_bam_alignment(bam_file, chr, start, end, height=50, fontsize="12pt", plot_width=800, plot_height=250, fill_color='gray'):
     """Bokeh bam alignments plotter.
+    
     Args:
         bam_file: name of a sorted bam file
         start: start of range to show
@@ -383,3 +384,58 @@ def plot_bam_alignment(bam_file, chr, start, end, height=50, fontsize="12pt", pl
     p.xaxis.formatter = NumeralTickFormatter(format="(0,0)")
     p.toolbar.logo = None
     return p
+
+def plot_vcf(vcf_file, start=0, end=None, ref_file=None, plot_width=1000,
+            tools="xpan, xwheel_zoom"):
+    """Plot vcf track. Mainly useful alongside genome features and bam view.
+    
+    Args:
+        vcf_file: name vcf or bcf file
+        start: start of range to show
+        end: end of range     
+    """
+    
+    df = utils.vcf_to_dataframe(vcf_file)
+    
+    def get_color(x):
+        if x=='snp':
+            return 'green'
+        elif x == 'indel':
+            return 'red'
+        return 'blue'
+    df['color'] = df.var_type.apply(get_color)
+    df['length'] = df.end-df.start
+    df['y'] = 0
+    df['x'] = df.start+df.length/2
+    df = df.fillna('')
+   
+    if end == None:
+        end = df.end.max()+100
+        if end>10000:
+            end=10000 
+    S = df.start.min()
+    N = df.end.max()+10 
+    #print (df)
+    source = ColumnDataSource(df)
+    hover = HoverTool(
+        tooltips=[            
+            ("var_type", "@var_type"),
+            ("start", "@start"),     
+            ("end", "@end"),
+            ("REF", "@REF"),
+            ("ALT", "@ALT"),
+            #("QUAL", "@QUAL")
+        ],      
+        point_policy='follow_mouse',
+    )
+    tools=[hover, tools]
+    x_range = Range1d(start,end,min_interval=1)
+    p = figure(title=None, plot_width=plot_width, plot_height=100, x_range=x_range,
+                y_range=(0,1), tools=tools, min_border=0, toolbar_location='below')
+    rects = Rect(x="x", y="y", width="length", height=2, fill_color='color', fill_alpha=0.4, name='rects')
+    p.add_glyph(source, rects)
+    p.grid.visible = False
+    p.yaxis.visible = False
+    p.xaxis.formatter = NumeralTickFormatter(format="(0,0)")
+    p.toolbar.logo = None
+    return p 

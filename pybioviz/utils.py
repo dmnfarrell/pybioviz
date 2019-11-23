@@ -320,7 +320,7 @@ def vcf_to_dataframe(vcf_file, quality=30):
     vcf_reader = vcf.Reader(open(vcf_file,'r'))   
     res=[]    
     for rec in vcf_reader:
-        x = rec.CHROM, rec.var_type, rec.var_subtype, rec.start, rec.end, rec.REF, rec.ALT, rec.QUAL, rec.INFO['DP'] ,rec.INFO['AO'][0],rec.INFO['RO']
+        x = rec.CHROM, rec.var_type, rec.var_subtype, rec.start, rec.end, str(rec.REF), str(rec.ALT), rec.QUAL, rec.INFO['DP'] ,rec.INFO['AO'][0],rec.INFO['RO']
         #print rec, rec.INFO['DP'] ,rec.INFO['RO']
         res.append(x)
     res = pd.DataFrame(res,columns=['chrom','var_type','sub_type','start','end','REF','ALT','QUAL','DP','AO','RO']) 

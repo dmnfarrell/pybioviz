@@ -27,9 +27,10 @@ def run_server(name, path='.', port=8000):
     
     if name == 'test':
         app = dashboards.test_app()
+    elif name == 'align':
+        app = dashboards.sequence_alignment_viewer(filename)
     elif name == 'bam':
-        app = bam_view('wt_mbovis.bam', 'Mbovis-AF212297.fa', 'Mbovis_AF212297.gff', width=1000)
-    
+        app = bam_view('wt_mbovis.bam', 'Mbovis-AF212297.fa', 'Mbovis_AF212297.gff', width=1000)    
     else:
         app = dashboards.view_features(path)    
     from bokeh.server.server import Server
@@ -49,7 +50,7 @@ def main():
     import sys, os
     from optparse import OptionParser
     parser = OptionParser()
-    parser.add_option("-s", "--seq-aligner", dest="seq",  action="store_true",
+    parser.add_option("-a", "--align", dest="seq",  action="store_true",
                         default=False, help="Run seq alignment viewer")
     parser.add_option("-b", "--bam-viewer", dest="bam",  action="store_true",
                         default=False, help="Run bam viewer")    

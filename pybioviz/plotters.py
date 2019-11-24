@@ -30,7 +30,7 @@ from bokeh.layouts import gridplot, column
 import panel as pn
 from . import utils
 
-def test_plot(rows=20, cols=100):
+def test_plot(rows=20, cols=100, plot_width=800):
     """Bokeh random colors plot"""
 
     x = np.arange(1, cols)
@@ -45,7 +45,7 @@ def test_plot(rows=20, cols=100):
     x_range = Range1d(0,10, bounds='auto')
 
     #entire sequence view (no text, with zoom)
-    p = figure(title=None, plot_width=900, plot_height=300,
+    p = figure(title=None, plot_width=plot_width, plot_height=300,
                     tools="xpan,xwheel_zoom,save,reset")
     rects = Rect(x="x", y="y",  width=1, height=1, fill_color="color", line_width=0)
     p.add_glyph(source, rects)
@@ -205,7 +205,7 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800):
 
     #entire sequence view (no text, with zoom)
     p = figure(title=None, plot_width=plot_width, plot_height=50, x_range=x_range, y_range=(0,S), tools=tools,
-                    min_border=0, toolbar_location='below')
+                    min_border=0, toolbar_location='below', sizing_mode='stretch_width')
     rects = Rect(x="x", y="recty",  width=1, height=1, fill_color="colors", line_color=None, fill_alpha=0.6)
     p.add_glyph(source, rects)
     #p.xaxis.visible = False

@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 from . import utils, plotters
 from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource, Plot, LinearAxis, Grid, Range1d,CustomJS, Slider, HoverTool
+from bokeh.models import (ColumnDataSource, Plot, LinearAxis, Grid, Range1d,CustomJS, Slider, HoverTool)
 from bokeh.models.glyphs import Text, Rect
 from bokeh.layouts import gridplot, column
 import panel as pn
@@ -34,8 +34,8 @@ def test_app():
     """Test dashboard"""
     
     def refresh(event):
-        plot1.object = plotters.test_plot(cols=col_sl.value,rows=row_sl.value)
-        plot2.object = plotters.dummy_plot(rows=row_sl.value)
+        plot1.object = plotters.test_plot(cols=col_sl.value,rows=row_sl.value, plot_width=600)
+        plot2.object = plotters.dummy_plot(rows=row_sl.value, plot_width=600)
         return
     from . import __version__
     title = pn.pane.Markdown('# pybioviz v%s test plots' %__version__)
@@ -47,6 +47,60 @@ def test_app():
     row_sl.param.watch(refresh, 'value')
     col_sl.param.trigger('value')    
     app = pn.Column(title,col_sl,row_sl,plot1,plot2)
+    return app
+
+def sequence_alignment_viewer(filename):
+    """Sequence alignment viewer"""
+    
+    title = pn.pane.Markdown('Sequence aligner: %s' %filename)
+
+    aln_btn = pnw.Button(name='align',width=100,button_type='primary')
+    #load_btn = pn.widgets.Button(name='load file',width=100,button_type='primary')
+    aligner_sel = pnw.Select(name='aligner',value='muscle',options=['muscle','clustal'],width=90)
+    seq_pane = pn.pane.HTML(name='sequences',height=200,css_classes=['scrollingArea'])
+    bokeh_pane = pn.pane.Bokeh(height=100)
+
+    def load_file(event):
+        filename = file_input.filename
+        sequences = SeqIO.parse(filename,format='fasta')
+        s = '<p>'.join([rec.format("fasta") for rec in sequences])
+        seq_pane.object = '<div class=monospace>'+s+'</div>'
+        return
+
+    def create_sequences(event):
+        s=''
+        for i in range(5):
+            name = ''.join([random.choice(string.ascii_lowercase) for i in range(10)])
+            s+='>%s\n' %name + make_seq()+'\n'
+        seq_pane.object = s
+        return 
+
+    def align(event):
+        #this function does the alignment using the textinput values    
+
+        #s = seq_pane.object
+        #filename = f_loader.param.inspect_value('file_path')
+        #sequences = SeqIO.parse(io.StringIO(s),format='fasta')
+        #filename = file_input.filename
+        sequences = SeqIO.parse(filename, format='fasta')
+        sequences = [rec for rec in sequences]
+        aln = utils.muscle_alignment(sequences)    
+        #the bokeh pane is then updated with the new figure
+        bokeh_pane.object = plotters.plot_sequence_alignment(aln, plot_width=700)
+        #bokeh_pane.object = plotters.test_plot()
+        return 
+
+    #file_input.param.watch(load_file,'value')
+    aln_btn.param.watch(align, 'clicks')
+    #randomseq_btn.param.watch(create_sequences, 'clicks')
+
+    side = pn.Column(title,aln_btn,aligner_sel,seq_pane,css_classes=['form'])
+    #side = pn.Column(title,top,seq_pane)
+    side.width=500
+
+    #app = pn.GridSpec(width=1000, height=600,sizing_mode='stretch_both')
+    
+    app = pn.Row(side, bokeh_pane)
     return app
 
 def view_features(features=None):

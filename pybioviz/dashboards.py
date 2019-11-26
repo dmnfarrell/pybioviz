@@ -19,10 +19,15 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
-import os,sys
+import os,sys,io
 import numpy as np
 import pandas as pd
 from . import utils, plotters
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
+from Bio.Align import MultipleSeqAlignment
+from Bio import AlignIO, SeqIO
+
 from bokeh.plotting import figure
 from bokeh.models import (ColumnDataSource, Plot, LinearAxis, Grid, Range1d,CustomJS, Slider, HoverTool)
 from bokeh.models.glyphs import Text, Rect
@@ -49,58 +54,49 @@ def test_app():
     app = pn.Column(title,col_sl,row_sl,plot1,plot2)
     return app
 
-def sequence_alignment_viewer(filename):
+def sequence_alignment_viewer(filename=None):
     """Sequence alignment viewer"""
     
-    title = pn.pane.Markdown('Sequence aligner: %s' %filename)
-
+    title = pn.pane.Markdown('### Sequence aligner: %s' %filename)
     aln_btn = pnw.Button(name='align',width=100,button_type='primary')
-    #load_btn = pn.widgets.Button(name='load file',width=100,button_type='primary')
-    aligner_sel = pnw.Select(name='aligner',value='muscle',options=['muscle','clustal'],width=90)
+    file_input = pnw.FileInput(name='load file',width=100,accept='.fa,.fasta,.faa')
+    aligner_sel = pnw.Select(name='aligner',value='muscle',options=['default','muscle','clustal'],width=100)
+    highlight_sel = pnw.Select(name='highlight mode',value='default',options=['default',''],width=100)
     seq_pane = pn.pane.HTML(name='sequences',height=200,css_classes=['scrollingArea'])
     bokeh_pane = pn.pane.Bokeh(height=100)
 
-    def load_file(event):
-        filename = file_input.filename
-        sequences = SeqIO.parse(filename,format='fasta')
-        s = '<p>'.join([rec.format("fasta") for rec in sequences])
-        seq_pane.object = '<div class=monospace>'+s+'</div>'
+    def update_file(event):
+        nonlocal seqtext
+        seqtext = file_input.value.decode('utf-8')
+        title.object = file_input.filename
+        #print(file_input.filename)
+        #sequences = SeqIO.parse(filename,format='fasta')
+        #s = '<p>'.join([rec.format("fasta") for rec in sequences])
+        #seq_pane.object = '<div class=monospace>'+s+'</div>'
         return
 
-    def create_sequences(event):
-        s=''
-        for i in range(5):
-            name = ''.join([random.choice(string.ascii_lowercase) for i in range(10)])
-            s+='>%s\n' %name + make_seq()+'\n'
-        seq_pane.object = s
-        return 
-
     def align(event):
-        #this function does the alignment using the textinput values    
-
-        #s = seq_pane.object
-        #filename = f_loader.param.inspect_value('file_path')
-        #sequences = SeqIO.parse(io.StringIO(s),format='fasta')
-        #filename = file_input.filename
-        sequences = SeqIO.parse(filename, format='fasta')
-        sequences = [rec for rec in sequences]
+        #this function does the alignment
+        nonlocal seqtext        
+        if seqtext is not None:
+            sequences = SeqIO.parse(io.StringIO(seqtext),format='fasta')
+        elif filename is not None:    
+            sequences = SeqIO.parse(filename, format='fasta')
+        else:      
+            return
+        sequences = list(sequences)
+        #print (sequences)
         aln = utils.muscle_alignment(sequences)    
         #the bokeh pane is then updated with the new figure
-        bokeh_pane.object = plotters.plot_sequence_alignment(aln, plot_width=700)
-        #bokeh_pane.object = plotters.test_plot()
+        bokeh_pane.object = plotters.plot_sequence_alignment(aln)  
         return 
-
-    #file_input.param.watch(load_file,'value')
+   
+    seqtext = None
+    file_input.param.watch(update_file,'value')
     aln_btn.param.watch(align, 'clicks')
-    #randomseq_btn.param.watch(create_sequences, 'clicks')
-
-    side = pn.Column(title,aln_btn,aligner_sel,seq_pane,css_classes=['form'])
-    #side = pn.Column(title,top,seq_pane)
-    side.width=500
-
-    #app = pn.GridSpec(width=1000, height=600,sizing_mode='stretch_both')
-    
-    app = pn.Row(side, bokeh_pane)
+    aln_btn.param.trigger('clicks')
+    side = pn.Column(aln_btn,file_input,aligner_sel,highlight_sel,seq_pane,css_classes=['form'],width=200)   
+    app = pn.Column(title,pn.Row(side, bokeh_pane, sizing_mode='stretch_width'))
     return app
 
 def view_features(features=None):

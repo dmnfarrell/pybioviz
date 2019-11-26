@@ -24,8 +24,10 @@ import numpy as np
 import pandas as pd
 from . import utils
 from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource, Plot, LinearAxis, Grid, Range1d,CustomJS, Slider, HoverTool, NumeralTickFormatter, Arrow, NormalHead, Label
+from bokeh.models import (ColumnDataSource, Plot, LinearAxis, Grid, Range1d,CustomJS, Slider, RangeSlider,
+                          HoverTool, NumeralTickFormatter, Arrow, NormalHead, Label)
 from bokeh.models.glyphs import Text, Rect
+from bokeh.events import Tap 
 from bokeh.layouts import gridplot, column
 import panel as pn
 from . import utils
@@ -164,7 +166,7 @@ def plot_sequence(seq, plot_width=1000, plot_height=20, fontsize='10pt', xaxis=T
     p.toolbar.logo = None
     return p
 
-def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800):
+def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800, sizing_mode='stretch_width', palette='Set1'):
     """Bokeh sequence alignment viewer.
 
     Args:
@@ -173,9 +175,12 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800):
 
     seqs = [rec.seq for rec in (aln)]
     ids = [rec.id for rec in aln]
+    if len(seqs) <= 1:
+        p = plot_empty('needs at least two sequences',plot_width)
+        return p
     #ids=range(len(seqs))
     text = [i for s in list(seqs) for i in s]
-    colors = utils.get_sequence_colors(seqs)
+    colors = utils.get_sequence_colors(seqs, palette=palette)
     cons = utils.get_cons(aln)
     N = len(seqs[0])
     S = len(seqs)
@@ -183,52 +188,53 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800):
 
     x = np.arange(1, N+1)
     y = np.arange(0,S,1)
-    print (y[:20])
+    #print (y[:20])
     xx, yy = np.meshgrid(x, y)
     gx = xx.ravel()
     gy = yy.flatten()
     recty = gy+.5
     h= 1/S
-    print (N,S)
+    
     #print (text)
     source = ColumnDataSource(dict(x=gx, y=gy, recty=recty, text=text, colors=colors))
     plot_height = len(seqs)*15+50
     x_range = Range1d(0,N+1, bounds='auto')
-    if N>100:
-        viewlen=100
-    else:
-        viewlen=N
-    view_range = (0,viewlen)
-    tools="xpan, xwheel_zoom, reset, save"
+    L=100
+    if len(seqs[0])<100:
+        L=len(seqs[0])
+    view_range = (0,L)
+    viewlen = view_range[1]-view_range[0]
+    tools="xpan, xwheel_zoom, tap, reset, save"
 
     #box_select = BoxSelectTool(callback=callback_select)
 
-    #entire sequence view (no text, with zoom)
+    #preview sequence view (no text)
     p = figure(title=None, plot_width=plot_width, plot_height=50, x_range=x_range, y_range=(0,S), tools=tools,
                     min_border=0, toolbar_location='below', sizing_mode='stretch_width')
-    rects = Rect(x="x", y="recty",  width=1, height=1, fill_color="colors", line_color=None, fill_alpha=0.6)
+    rects = Rect(x="x", y="recty",  width=1, height=1, fill_color="colors", line_color=None, fill_alpha=0.4)
     p.add_glyph(source, rects)
-    #p.xaxis.visible = False
+    previewrect = Rect(x=viewlen/2,y=S/2, width=viewlen, height=S*.99, line_color='darkblue', fill_color=None)
+    p.add_glyph(source, previewrect)
     p.yaxis.visible = False
     p.grid.visible = False
-    p.toolbar.logo = None
-
+    
     #sequence text view, zoom fixed
     p1 = figure(title=None, plot_width=plot_width, plot_height=plot_height, x_range=view_range, y_range=ids, tools="xpan,reset",
                     min_border=0, toolbar_location='below')#, lod_factor=1)
-    glyph = Text(x="x", y="y", text="text", text_align='center',text_color="black", text_font="monospace",text_font_size=fontsize)
-    rects = Rect(x="x", y="recty",  width=1, height=1, fill_color="colors", line_color=None, fill_alpha=0.4)
-    p1.add_glyph(source, glyph)
+    seqtext = Text(x="x", y="y", text="text", text_align='center',text_color="black", text_font="monospace",text_font_size=fontsize)
+    rects = Rect(x="x", y="recty",  width=1, height=1, fill_color="colors", line_color=None, fill_alpha=0.5)    
     p1.add_glyph(source, rects)
+    p1.add_glyph(source, seqtext)
 
     p1.grid.visible = False
     p1.xaxis.major_label_text_font_style = "bold"
     p1.yaxis.minor_tick_line_width = 0
     p1.yaxis.major_tick_line_width = 0
-
+    p1.toolbar.logo = None
+    
     source2 = ColumnDataSource(dict(x=x, cons=cons))
 
-    p3 = figure(title=None, plot_width=plot_width, plot_height=30, x_range=p1.x_range, y_range=(Range1d(min(cons),.5)), tools="xpan")
+    p3 = figure(title=None, plot_width=plot_width, plot_height=S*3+5, x_range=p1.x_range, y_range=(Range1d(min(cons),.5)), tools="xpan")
     rects2 = Rect(x="x", y=0,  width=1, height="cons", fill_color="gray", line_color=None, fill_alpha=0.7)
     p3.add_glyph(source2, rects2)
 
@@ -237,17 +243,42 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800):
     p3.grid.visible = False
     p3.background_fill_color = "beige"
 
-    #p.js_on_change('selected', callback_select)
+    #callback for click
     jscode="""
-    var start = cb_obj.value;
-    x_range.setv({"start": start, "end": start+l})
+        row =  parseInt(cb_obj.y);
+        console.log(row);
+    """
+    clicked = CustomJS(args=dict(source=source),code=jscode)
+    p1.js_on_event(Tap, clicked) 
+    
+    #callback for slider move
+    jscode="""        
+        var start = cb_obj.value[0];  
+        var end = cb_obj.value[1];        
+        x_range.setv({"start": start, "end": end})
+        rect.width = end-start;
+        rect.x = start+rect.width/2;
+        var fac = rect.width/width;
+        if (fac>=.22) { fontsize = 0;}  
+        else { fontsize = 8.5; }
+        text.text_font_size=fontsize+"pt";
     """
     callback = CustomJS(
-        args=dict(x_range=p1.x_range,l=viewlen), code=jscode)
-    slider = Slider (start=0, end=N, value=1, step=10)
-    slider.js_on_change('value', callback)
-
-    p = gridplot([[p],[slider],[p3],[p1]], toolbar_location='below')
+        args=dict(x_range=p1.x_range,rect=previewrect,text=seqtext,width=p1.plot_width), code=jscode)
+    slider = RangeSlider (start=0, end=N, value=(0,L), step=10, callback_policy="throttle")
+    slider.js_on_change('value_throttled', callback)
+    
+    #callback for plot drag
+    jscode="""        
+        start = parseInt(range.start);
+        end = parseInt(range.end);
+        slider.value[0] = start;
+        rect.width = end-start;
+        rect.x = start+rect.width/2;
+    """
+    p1.x_range.callback = CustomJS(args=dict(slider=slider, range=p1.x_range, rect=previewrect),
+                                  code=jscode)    
+    p = gridplot([[p],[slider],[p3],[p1]], toolbar_location='below', sizing_mode=sizing_mode)
     return p
 
 def plot_features(features, start=0, end=None, fontsize="8pt", plot_width=800, plot_height=150,

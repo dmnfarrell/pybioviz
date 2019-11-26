@@ -23,8 +23,9 @@ import os,sys,subprocess
 import pandas as pd
 from . import dashboards, utils, __version__
 
-def run_server(name, path='.', port=8000):
+def run_server(name, path='.', filename='', port=8000):
     
+    print (name)
     if name == 'test':
         app = dashboards.test_app()
     elif name == 'align':
@@ -50,20 +51,21 @@ def main():
     import sys, os
     from optparse import OptionParser
     parser = OptionParser()
-    parser.add_option("-a", "--align", dest="seq",  action="store_true",
-                        default=False, help="Run seq alignment viewer")
-    parser.add_option("-b", "--bam-viewer", dest="bam",  action="store_true",
-                        default=False, help="Run bam viewer")    
+
+    parser.add_option("-i", "--input", dest="filename",
+                        help="input file", metavar="FILE")    
+    parser.add_option("-a", "--app", dest="app", default='test',
+                        help="App type to run")
     parser.add_option("-p", "--port", dest="port", default=8000,
                         help="Port for web app, default 8000")    
     parser.add_option("-t", "--test", dest="test",  action="store_true",
                         default=False, help="Show test plots")
     opts, remainder = parser.parse_args()
-    if opts.bam is True:
-        cmd = 'panel serve'
-             
-    elif opts.test is True:
+
+    if opts.test is True:
         run_server('test')
+    else:
+        run_server(opts.app, filename=opts.filename)
         
 if __name__ == '__main__':
     main()

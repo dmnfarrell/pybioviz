@@ -20,6 +20,7 @@
 """
 
 import os,sys,random,subprocess
+import numpy as np
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Align import MultipleSeqAlignment
@@ -82,15 +83,22 @@ def muscle_alignment(seqs):
     """Align sequences with muscle"""
 
     from Bio import SeqIO, AlignIO
-    filename = 'temp.faa'
+    filename = 'temp.fa'
     SeqIO.write(seqs, filename, "fasta")
     name = os.path.splitext(filename)[0]
     from Bio.Align.Applications import MuscleCommandline
-    cline = MuscleCommandline(input=filename, out=name+'.txt')
+    cline = MuscleCommandline(input=filename, out=name+'.txt')    
     stdout, stderr = cline()
     align = AlignIO.read(name+'.txt', 'fasta')
     return align
 
+def get_random_fasta(n=5):
+    s=''
+    for i in range(n):
+        name = ''.join([random.choice(string.ascii_lowercase) for i in range(10)])
+        s+='>%s\n' %name + make_seq()+'\n'    
+    return s
+    
 def random_colors(size, seed=30):
     """random list of html colors of length sizes"""
     random.seed = seed
@@ -99,16 +107,20 @@ def random_colors(size, seed=30):
                 for i in range(size)]
     return colors
 
-def get_sequence_colors(seqs):
+def get_sequence_colors(seqs, palette='viridis'):
     """Get colors for a sequence"""
 
-    from bokeh.palettes import brewer, viridis
     from Bio.PDB.Polypeptide import aa1
-    pal = viridis(20)
-    pal.append('white')
     aa1 = list(aa1)
     aa1.append('-')
+    import matplotlib as mpl
+    from matplotlib import cm
+    pal = cm.get_cmap(palette, 256)    
+    pal = [mpl.colors.to_hex(i) for i in pal(np.linspace(0, 1, 20))]
+    pal.append('white')
+
     pcolors = {i:j for i,j in zip(aa1,pal)}
+    
     text = [i for s in list(seqs) for i in s]
     clrs =  {'A':'red','T':'green','G':'orange','C':'blue','-':'white'}
     try:

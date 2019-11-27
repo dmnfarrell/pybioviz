@@ -166,7 +166,8 @@ def plot_sequence(seq, plot_width=1000, plot_height=20, fontsize='10pt', xaxis=T
     p.toolbar.logo = None
     return p
 
-def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800, sizing_mode='stretch_width', palette='Set1'):
+def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800, sizing_mode='stretch_width', palette='Set1',
+                               row_height=10):
     """Bokeh sequence alignment viewer.
 
     Args:
@@ -197,7 +198,7 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800, sizing_mode='st
     
     #print (text)
     source = ColumnDataSource(dict(x=gx, y=gy, recty=recty, text=text, colors=colors))
-    plot_height = len(seqs)*15+50
+    plot_height = len(seqs) * row_height + 50
     x_range = Range1d(0,N+1, bounds='auto')
     L=100
     if len(seqs[0])<100:
@@ -209,7 +210,7 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800, sizing_mode='st
     #box_select = BoxSelectTool(callback=callback_select)
 
     #preview sequence view (no text)
-    p = figure(title=None, plot_width=plot_width, plot_height=50, x_range=x_range, y_range=(0,S), tools=tools,
+    p = figure(title=None, plot_width=plot_width, plot_height=S*2+25, x_range=x_range, y_range=(0,S), tools=tools,
                     min_border=0, toolbar_location='below', sizing_mode='stretch_width')
     rects = Rect(x="x", y="recty",  width=1, height=1, fill_color="colors", line_color=None, fill_alpha=0.4)
     p.add_glyph(source, rects)
@@ -218,7 +219,7 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800, sizing_mode='st
     p.yaxis.visible = False
     p.grid.visible = False
     
-    #sequence text view, zoom fixed
+    #full sequence text view
     p1 = figure(title=None, plot_width=plot_width, plot_height=plot_height, x_range=view_range, y_range=ids, tools="xpan,reset",
                     min_border=0, toolbar_location='below')#, lod_factor=1)
     seqtext = Text(x="x", y="y", text="text", text_align='center',text_color="black", text_font="monospace",text_font_size=fontsize)
@@ -234,7 +235,7 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800, sizing_mode='st
     
     source2 = ColumnDataSource(dict(x=x, cons=cons))
 
-    p3 = figure(title=None, plot_width=plot_width, plot_height=S*3+5, x_range=p1.x_range, y_range=(Range1d(min(cons),.5)), tools="xpan")
+    p3 = figure(title=None, plot_width=plot_width, plot_height=50, x_range=p1.x_range, y_range=(Range1d(min(cons),.5)), tools="xpan")
     rects2 = Rect(x="x", y=0,  width=1, height="cons", fill_color="gray", line_color=None, fill_alpha=0.7)
     p3.add_glyph(source2, rects2)
 

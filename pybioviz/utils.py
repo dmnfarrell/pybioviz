@@ -71,12 +71,18 @@ def clustal_alignment(seqs):
     """Align 2 sequences with clustal"""
     
     from Bio import SeqIO, AlignIO
+    filename = 'temp.fa'
     SeqIO.write(seqs, filename, "fasta")
     name = os.path.splitext(filename)[0]
     from Bio.Align.Applications import ClustalwCommandline
-    cline = ClustalwCommandline(command, infile=filename)
-    stdout, stderr = cline()
-    align = AlignIO.read(name+'.aln', 'clustal')
+    cline = ClustalwCommandline("clustalw", infile=filename)
+    print (cline)
+    try:
+        stdout, stderr = cline()        
+    except:
+        print ('clustalw not installed')
+        return 
+    align = AlignIO.read('temp.aln', 'clustal')
     return align
 
 def muscle_alignment(seqs):
@@ -88,8 +94,21 @@ def muscle_alignment(seqs):
     name = os.path.splitext(filename)[0]
     from Bio.Align.Applications import MuscleCommandline
     cline = MuscleCommandline(input=filename, out=name+'.txt')    
-    stdout, stderr = cline()
+    try:        
+        stdout, stderr = cline()
+    except:
+        print ('muscle not installed?')
+        return
     align = AlignIO.read(name+'.txt', 'fasta')
+    return align
+
+def mafft_alignment(seqs):
+    
+    filename = 'temp.fa'
+    SeqIO.write(seqs, filename, "fasta")
+    cmd = 'mafft --retree 1 temp.fa > temp.aln'
+    tmp = subprocess.check_output(cmd, shell=True)
+    align = AlignIO.read('temp.aln', 'fasta')
     return align
 
 def get_random_fasta(n=5):

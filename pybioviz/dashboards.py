@@ -60,10 +60,10 @@ def sequence_alignment_viewer(filename=None):
     title = pn.pane.Markdown('### Sequence aligner: %s' %filename)
     aln_btn = pnw.Button(name='align',width=100,button_type='primary')
     file_input = pnw.FileInput(name='load file',width=100,accept='.fa,.fasta,.faa')
-    aligner_sel = pnw.Select(name='aligner',value='muscle',options=['default','muscle','clustal'],width=100)
+    aligner_sel = pnw.Select(name='aligner',value='muscle',options=['muscle','clustal','maaft'],width=100)
     highlight_sel = pnw.Select(name='highlight mode',value='default',options=['default',''],width=100)
     seq_pane = pn.pane.HTML(name='sequences',height=200,css_classes=['scrollingArea'])
-    bokeh_pane = pn.pane.Bokeh(height=100)
+    bokeh_pane = pn.pane.Bokeh()
 
     def update_file(event):
         nonlocal seqtext
@@ -86,17 +86,26 @@ def sequence_alignment_viewer(filename=None):
             return
         sequences = list(sequences)
         #print (sequences)
-        aln = utils.muscle_alignment(sequences)    
-        #the bokeh pane is then updated with the new figure
-        bokeh_pane.object = plotters.plot_sequence_alignment(aln)  
+        aligner = aligner_sel.value
+        if aligner == 'muscle':
+            aln = utils.muscle_alignment(sequences)    
+        elif aligner == 'clustal':
+            aln = utils.clustal_alignment(sequences)
+        elif aligner == 'mafft':
+            aln = utils.mafft_alignment(sequences)
+        if aln is None:
+            bokeh_pane.object = plotters.plot_empty('aligner not found',900)
+        else:
+            #the bokeh pane is then updated with the new figure
+            bokeh_pane.object = plotters.plot_sequence_alignment(aln)  
         return 
    
     seqtext = None
     file_input.param.watch(update_file,'value')
     aln_btn.param.watch(align, 'clicks')
     aln_btn.param.trigger('clicks')
-    side = pn.Column(aln_btn,file_input,aligner_sel,highlight_sel,seq_pane,css_classes=['form'],width=200)   
-    app = pn.Column(title,pn.Row(side, bokeh_pane, sizing_mode='stretch_width'))
+    side = pn.Column(aln_btn,file_input,aligner_sel,highlight_sel,seq_pane,css_classes=['form'],width=200,margin=20)
+    app = pn.Column(title,pn.Row(side, bokeh_pane), sizing_mode='stretch_width',width_policy='max',margin=20)
     return app
 
 def view_features(features=None):

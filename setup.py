@@ -22,7 +22,7 @@ setup(
     install_requires=['numpy>=1.10',
                       'pandas>=0.24',
                       'biopython>=1.5',
-                      'panel>=0.6.0',
+                      'panel>=0.7.0',
                       'bokeh>0.12',
                       'pyfaidx>0.5',
                       'pysam>0.15',

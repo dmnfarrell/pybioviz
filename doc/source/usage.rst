@@ -55,7 +55,6 @@ A sequence alignment can be plotted by reading in an alignment in fasta, clustal
 .. image:: sequence_align_plot.png
      :scale: 60%
 
-
 Plot bam coverage
 +++++++++++++++++
 
@@ -79,6 +78,10 @@ Genomic features describe the annotated sequence in a genome such as proteins, r
   out = pn.pane.Bokeh()
   out.object = pbv.plot_features(feats,preview=False, plot_width=900, plot_height=80)
 
+Plot vcf
+++++++++
+
+vcf and bcf files are the results of variant calling programs. These are coordinates along the reference sequence and variant details.
 
 Viewers (Dashboards)
 ====================

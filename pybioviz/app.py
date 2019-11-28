@@ -23,23 +23,29 @@ import os,sys,subprocess
 import pandas as pd
 from . import dashboards, utils, __version__
 
-def run_server(name, path='.', filename='', port=8000):
-    
-    print (name)
-    if name == 'test':
+def run_server(appname, path='.', filename='', gff_file=None, ref_file=None, 
+               bam_file=None, port=8000, **kwargs):
+      
+    if appname == 'test':
         app = dashboards.test_app()
-    elif name == 'align':
+    elif appname == 'align':
         app = dashboards.sequence_alignment_viewer(filename)
-    elif name == 'bam':
-        app = bam_view('wt_mbovis.bam', 'Mbovis-AF212297.fa', 'Mbovis_AF212297.gff', width=1000)    
+    elif appname == 'features':
+        app = dashboards.genome_features_viewer(gff_file, ref_file)
+    elif appname == 'bam':
+        app = dashboards.bam_viewer(bam_file, ref_file, gff_file, width=1000)
     else:
-        app = dashboards.view_features(path)    
+        print ('valid dashboard names: test, align, bam, features')
+        return
+    if app is None:
+        print ('please provide the correct input files')
+        return
     from bokeh.server.server import Server
     def modify_doc(doc):               
-        return app.server_doc(doc=doc, title='pybioviz: %s' %name)
-    
-    print('Opening application on http://localhost:%s/' %port)
+        return app.server_doc(doc=doc, title='pybioviz: %s' %appname)
+        
     server = Server({'/': modify_doc}, port=port)
+    print('Opening application on http://localhost:%s/' %server.port)
     server.start()
     server.show('/')
     server.run_until_shutdown()
@@ -49,23 +55,24 @@ def main():
     "Run the application"
 
     import sys, os
-    from optparse import OptionParser
-    parser = OptionParser()
+    from argparse import ArgumentParser
+    parser = ArgumentParser(description='pybioviz command line tools')
 
-    parser.add_option("-i", "--input", dest="filename",
-                        help="input file", metavar="FILE")    
-    parser.add_option("-a", "--app", dest="app", default='test',
-                        help="App type to run")
-    parser.add_option("-p", "--port", dest="port", default=8000,
-                        help="Port for web app, default 8000")    
-    parser.add_option("-t", "--test", dest="test",  action="store_true",
-                        default=False, help="Show test plots")
-    opts, remainder = parser.parse_args()
-
-    if opts.test is True:
-        run_server('test')
-    else:
-        run_server(opts.app, filename=opts.filename)
+    parser.add_argument(dest="appname", default='test',
+                        help="dashboard name: test, align, features")
+    parser.add_argument("-f", "--fasta", dest="filename",
+                        help="input fasta file", metavar="FILE")
+    parser.add_argument("-r", "--ref", dest="ref_file",
+                        help="reference fasta file", metavar="FILE")
+    parser.add_argument("-g", "--gff", dest="gff_file",
+                        help="gff file", metavar="FILE")    
+    parser.add_argument("-b", "--bam", dest="bam_file",
+                        help="bam file", metavar="FILE")    
+    parser.add_argument("-p", dest="port", default=None,
+                        help="Port to use, random if none provided")    
+    args = vars(parser.parse_args())
+        
+    run_server(**args)        
         
 if __name__ == '__main__':
     main()

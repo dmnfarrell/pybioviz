@@ -14,7 +14,7 @@ setup(
     author = 'Damien Farrell',
     author_email = 'farrell.damien@gmail.com',
     packages = ['pybioviz'],
-    package_data={'pybioviz': ['data/*.aln',
+    package_data={'pybioviz': ['data/*.*',
                   'notebooks/*.ipynb',
                   'templates/*.html',
                   'description.txt']
@@ -23,7 +23,7 @@ setup(
                       'pandas>=0.24',
                       'biopython>=1.5',
                       'panel>=0.7.0',
-                      'bokeh>0.12',
+                      'bokeh>=1.4',
                       'pyfaidx>0.5',
                       'pysam>0.15',
                       'bcbio_gff',
@@ -42,5 +42,5 @@ setup(
             'Development Status :: 4 - Beta',
             'Intended Audience :: Science/Research',
             'Topic :: Scientific/Engineering :: Bio-Informatics'],
-    keywords = ['bioinformatics','biology','sequencing','dashboard'],
+    keywords = ['bioinformatics','biology','genomics','dashboard']
 )

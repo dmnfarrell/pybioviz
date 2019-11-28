@@ -1,9 +1,8 @@
 Usage
 =====
 
-This toolkit is to provide bioinformatic visualization tools to be used inside Jupyter notebooks.
-
-Installing the package provides the command pybioviz at the terminal. This can be used to launch the various tools.
+This page shows how to use the package from Python (usually via a Jupyter notebook) and through the command line.
+Installing the package provides the command pybioviz at the terminal. This can be used to launch the various tools. See below for details.
 
 Code examples
 =============
@@ -11,7 +10,12 @@ Code examples
 Imports
 +++++++
 
-.. code-block::
+If just using the plotting routines in a notebook you can just import Bokeh::
+
+    from bokeh.io import show, output_notebook
+    output_notebook()
+
+If using Panel::
 
   import panel as pn
   import panel.widgets as pnw
@@ -43,7 +47,7 @@ A trivial usage is to display a piece of sequence from a fasta file. This is usu
 Plot sequence alignments
 ++++++++++++++++++++++++
 
-A sequence alignment can be plotted by reading in an alignment in fasta, clustal or other format. The BioPython package is used to read the file and the alignment records passed to the plot function.
+A sequence alignment can be plotted by reading in an alignment in fasta, clustal or other format. The BioPython package is used to read the file and the alignment records passed to the plot function. Protein and nucleotide sequences can be used.
 
 .. code-block::
 
@@ -83,17 +87,30 @@ Plot vcf
 
 vcf and bcf files are the results of variant calling programs. These are coordinates along the reference sequence and variant details.
 
-Viewers (Dashboards)
-====================
+Dashboards
+==========
 
-Viewers are mini apps that are created by using the plotting tools detailed above, combined with widgets that allow user interactivity. They can be created inside a notebook or launched as standalone apps in a web browser using a command in the terminal.
+Dashboards are small interctive apps that are created by using the plotting tools detailed above, combined with widgets that allow user interactivity. They can be created inside a notebook or launched as standalone apps in a web browser using a command in the terminal.
 
 Sequence alignment viewer
 +++++++++++++++++++++++++
 
-This dashboard is for used for viewing and manipulating multiple sequence alignments.
+This dashboard is for used for viewing and manipulating multiple sequence alignments. You can load files from local directories and re-align, zoom in and out of the sequence. Other features to add and remove sequences have yet to be added.
 
+.. image:: sequence_aligner_dashboard.gif
 
+To use this inside a notebook::
+
+    import panel as pn
+    #need to load panel extension first
+    pn.extension()
+    from pybioviz import dashboards
+    app = dashboards.sequence_alignment_viewer('file.fa')
+    
+Genomic features viewer
++++++++++++++++++++++++
+
+.. image:: genome_features_dashboard.gif
 
 Bam alignment viewer
 ++++++++++++++++++++
@@ -102,3 +119,28 @@ Bam files are used to store the results of short reads aligned to a genome seque
 
 .. image:: bam_viewer.png
      :scale: 60%
+     
+Command line
+============
+
+You can run dashboards as apps from the command line. This will launch a web page in the browser with the input files you provided loaded in. The command is simply pybiovz followed by the name of the dashboard and the input files as required. So to launch a sequence aligner::
+
+    pybioviz align -f myfile.fasta
+
+To view genomic features in a gff file::
+
+    pybioviz features -g myfile.gff <-f myfile.fasta>
+    
+The full arguments are as follows:
+
+    positional arguments:
+      appname               dashboard name: test, align, features
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -f FILE, --fasta FILE
+                            input fasta file
+      -r FILE, --ref FILE   reference fasta file
+      -g FILE, --gff FILE   gff file
+      -b FILE, --bam FILE   bam file
+      -p PORT               Port to use, random if none provided

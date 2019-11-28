@@ -32,7 +32,7 @@ from bokeh.layouts import gridplot, column
 import panel as pn
 from . import utils
 
-def test_plot(rows=20, cols=100, plot_width=800):
+def test1(rows=20, cols=100, plot_width=800):
     """Bokeh random colors plot"""
 
     x = np.arange(1, cols)
@@ -69,7 +69,7 @@ def plot_empty(msg='', plot_width=600, plot_height=200):
     p.yaxis.visible = False
     return p
 
-def dummy_plot(start=0,end=500,rows=3,plot_width=1000,callback=None):
+def test2(start=0,end=500,rows=3,plot_width=1000,callback=None):
     """Plot with random rects for scroll testing"""
     
     from bokeh.models import BoxZoomTool
@@ -283,13 +283,13 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800, sizing_mode='st
     return p
 
 def plot_features(features, start=0, end=None, fontsize="8pt", plot_width=800, plot_height=150,
-                  tools="xpan, xwheel_zoom, save", color='#abdda4', rows=2, key='gene'):
+                  tools="xpan, xwheel_zoom, save", color='#abdda4', rows=3, key='gene'):
     """Bokeh sequence alignment view"""
     
     df = utils.features_to_dataframe(features)#, cds=True)    
     df = df[(df.type!='region') & (df['type']!='source')]   
     df['length'] = df.end-df.start
-    df['level'] = 1
+    #df['level'] = 1
     #df['color'] = random_colors(len(df)) #'green'
     df['x'] = df.start+df.length/2
     df = df.fillna('')
@@ -302,8 +302,8 @@ def plot_features(features, start=0, end=None, fontsize="8pt", plot_width=800, p
     df['arrow_start'] = df.apply(get_arrow,1)
     df['arrow_end'] = df.apply(lambda x: x.arrow_start+50 if x.strand==1 else x.arrow_start-50, 1)
     
-    def get_y(x):
-        df['col'].shift()
+    #def get_y(x):
+    #    df['col'].shift()
     np.random.seed(8) 
     
     #df['y'] = np.random.randint(1,9, len(df))
@@ -322,7 +322,7 @@ def plot_features(features, start=0, end=None, fontsize="8pt", plot_width=800, p
     h = 20
 
     source = ColumnDataSource(df)
-    x_range = (start,end)  
+    x_range = Range1d(start,end,min_interval=1)  
     viewlen = end-start
     hover = HoverTool(
         tooltips=[            
@@ -333,22 +333,22 @@ def plot_features(features, start=0, end=None, fontsize="8pt", plot_width=800, p
             ("length", "@length"),             
         ],        
     )  
-    tools=[hover, tools]
-    
+    tools=[hover, tools]    
     #sequence text view with ability to scroll along x axis
     p = figure(title=None, plot_width=plot_width, plot_height=plot_height, x_range=x_range,
                 y_range=(-1,rows), tools=tools, min_border=0, toolbar_location='right')#, lod_factor=1)
-    #display text only at certain zoom level
+    #display text only at certain zoom level?
+    #print (viewlen)
     if viewlen<20000:
-        tags = Text(x="x", y="y", y_offset=-10, text=key, text_align='center',text_color="black", 
+        tags = Text(x="x", y="y", y_offset=-8, text=key, text_align='center',text_color="black", 
                      text_font="monospace",text_font_size=fontsize, name="genetext")
         p.add_glyph(source, tags)
+    #rects
     rects = Rect(x="x", y="y", width="length", height=.4, fill_color=color, fill_alpha=0.4, name='rects')
-    #add arrows
+    #arrows
     arr = Arrow(source=source, x_start="arrow_start", x_end="arrow_end", y_start="y", y_end="y", 
                 line_color="black", name='arrows', end=NormalHead(size=8))
-    p.add_glyph(source, rects)
-    
+    p.add_glyph(source, rects)    
     p.add_layout(arr)
     
     p.grid.visible = False
@@ -358,23 +358,20 @@ def plot_features(features, start=0, end=None, fontsize="8pt", plot_width=800, p
     p.yaxis.major_tick_line_width = 0
     p.toolbar.logo = None
     p.xaxis.formatter = NumeralTickFormatter(format="(0,0)")
-    #if drag_callback is not None:
-    #     source.on_change("selected", drag_callback)
-
     return p
 
-def plot_bam_alignment(bam_file, chr, start, end, height=50, fontsize="12pt", plot_width=800, plot_height=250, fill_color='gray'):
+def plot_bam_alignment(bam_file, chr, start, end, height=50, fontsize="12pt", 
+                       plot_width=800, plot_height=250, fill_color='gray'):
     """Bokeh bam alignments plotter.
-    
     Args:
         bam_file: name of a sorted bam file
         start: start of range to show
-        end: end of range
+        end: end of range        
     """
-
+    
     if bam_file is None:
-        return plotters.plot_empty('no bam file',plot_width=plot_width, plot_height=plot_height)
-
+        return plot_empty('no bam file',plot_width=plot_width, plot_height=plot_height)
+    
     h=.6+height/plot_height
     #get outer ranges to retrieve reads from so that we
     #cover the visible range from start-end
@@ -384,17 +381,20 @@ def plot_bam_alignment(bam_file, chr, start, end, height=50, fontsize="12pt", pl
     if df is None:
         p = plotters.plot_empty('no bam file or bam not indexed')
         return p
+
+    if len(df)==0:
+        p = plotters.plot_empty('no data in range')
+        return p
     #offset for rects
     df['x'] = df.start+df.length/2
     #set colors by quality
     df['color'] = df.apply(lambda x: 'red' if x.mapq==0 else fill_color ,1)
     df['span'] = df.apply(lambda x: str(x.start)+':'+str(x.end),1)
-    print (len(df))
-
+    
     source = ColumnDataSource(df)
     x_range=(start, end)
     hover = HoverTool(
-        tooltips=[
+        tooltips=[            
             ("name", "@name"),
             ("cigar", "@cigar"),
             ("span", "@span"),
@@ -405,8 +405,8 @@ def plot_bam_alignment(bam_file, chr, start, end, height=50, fontsize="12pt", pl
         point_policy='follow_mouse',
     )
     tools=[hover,"ypan","save"]
-
-    p = figure(title=None, plot_width=plot_width, plot_height=plot_height, x_range=x_range, y_range=(0,height), tools=tools,
+    
+    p = figure(title=None, plot_width=plot_width, plot_height=plot_height, x_range=x_range, y_range=(0,height), tools=tools, 
                     min_border=0, toolbar_location='right')
     rects = Rect(x="x", y="y", width="length", height=h, fill_color="color", line_color='gray',fill_alpha=0.4)
     #if start-end > 100:

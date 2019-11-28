@@ -1,6 +1,8 @@
-
 Welcome to PyBioViz documentation.
 ==================================
+
+This toolkit is to provide bioinformatic visualization tools to be used inside Jupyter notebooks or in standalone web pages.
+
 
 Contents:
 

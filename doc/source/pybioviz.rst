@@ -12,10 +12,10 @@ pybioviz\.plotters module
     :undoc-members:
     :show-inheritance:
 
-pybioviz\.viewers module
+pybioviz\.dashboards module
 ------------------------
 
-.. automodule:: pybioviz.viewers
+.. automodule:: pybioviz.dashboards
     :members:
     :undoc-members:
     :show-inheritance:

@@ -35,14 +35,14 @@ featurekeys = ['type','protein_id','locus_tag','gene','db_xref',
                'product', 'note', 'translation','pseudo','start','end','strand']
 
 def get_template():
-    
+
     f=open(os.path.join(templatedir, 'base.html'),'r')
     tmpl = ''.join(f.readlines())
     return tmpl
 
 def get_css():
     """get custom css"""
-    
+
     f=open(os.path.join(templatedir, 'custom.css'),'r')
     s=''.join(f.readlines())
     return s
@@ -52,7 +52,7 @@ def align_nucmer(file1, file2):
     Align two fasta files with nucmer
     Returns: pandas dataframe of coords
     """
-    
+
     cmd='nucmer --maxgap=500 --mincluster=100 --coords -p nucmer %s %s' %(file1, file2)
     print (cmd)
     subprocess.check_output(cmd,shell=True)
@@ -61,7 +61,7 @@ def align_nucmer(file1, file2):
 
 def read_nucmer_coords(cfile):
     """Read nucmer coords file into dataframe."""
-    
+
     cols=['S1','E1','S2','E2','LEN 1','LEN 2','IDENT','TAG1','TAG2']
     a=pd.read_csv(cfile,sep='[\s|]+',skiprows=5,names=cols,engine='python')
     a = a.sort_values(by='TAG2',ascending=False)
@@ -69,7 +69,7 @@ def read_nucmer_coords(cfile):
 
 def clustal_alignment(seqs):
     """Align 2 sequences with clustal"""
-    
+
     from Bio import SeqIO, AlignIO
     filename = 'temp.fa'
     SeqIO.write(seqs, filename, "fasta")
@@ -78,10 +78,10 @@ def clustal_alignment(seqs):
     cline = ClustalwCommandline("clustalw", infile=filename)
     print (cline)
     try:
-        stdout, stderr = cline()        
+        stdout, stderr = cline()
     except:
         print ('clustalw not installed')
-        return 
+        return
     align = AlignIO.read('temp.aln', 'clustal')
     return align
 
@@ -93,8 +93,8 @@ def muscle_alignment(seqs):
     SeqIO.write(seqs, filename, "fasta")
     name = os.path.splitext(filename)[0]
     from Bio.Align.Applications import MuscleCommandline
-    cline = MuscleCommandline(input=filename, out=name+'.txt')    
-    try:        
+    cline = MuscleCommandline(input=filename, out=name+'.txt')
+    try:
         stdout, stderr = cline()
     except:
         print ('muscle not installed?')
@@ -103,7 +103,7 @@ def muscle_alignment(seqs):
     return align
 
 def mafft_alignment(seqs):
-    
+
     filename = 'temp.fa'
     SeqIO.write(seqs, filename, "fasta")
     cmd = 'mafft --retree 1 temp.fa > temp.aln'
@@ -115,18 +115,18 @@ def get_random_fasta(n=5):
     s=''
     for i in range(n):
         name = ''.join([random.choice(string.ascii_lowercase) for i in range(10)])
-        s+='>%s\n' %name + make_seq()+'\n'    
+        s+='>%s\n' %name + make_seq()+'\n'
     return s
-    
+
 def random_colors(size, seed=30):
     """random list of html colors of length sizes"""
     random.seed = seed
-    
+
     colors = ["#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
                 for i in range(size)]
     return colors
 
-def get_sequence_colors(seqs, palette='viridis'):
+def get_sequence_colors(seqs, palette='tab20'):
     """Get colors for a sequence"""
 
     from Bio.PDB.Polypeptide import aa1
@@ -134,12 +134,11 @@ def get_sequence_colors(seqs, palette='viridis'):
     aa1.append('-')
     import matplotlib as mpl
     from matplotlib import cm
-    pal = cm.get_cmap(palette, 256)    
+    pal = cm.get_cmap(palette, 256)
     pal = [mpl.colors.to_hex(i) for i in pal(np.linspace(0, 1, 20))]
     pal.append('white')
 
-    pcolors = {i:j for i,j in zip(aa1,pal)}
-    
+    pcolors = {i:j for i,j in zip(aa1,pal)}    
     text = [i for s in list(seqs) for i in s]
     clrs =  {'A':'red','T':'green','G':'orange','C':'blue','-':'white'}
     try:
@@ -225,7 +224,7 @@ def features_to_dataframe(features, cds=False):
 
 def genbank_to_features(gb_file, key=0):
     """Read genbank record features"""
-    
+
     if gb_file is None or not os.path.exists(gb_file):
         return
     rec = list(SeqIO.parse(open(gb_file,'r'),'genbank'))[key]
@@ -261,17 +260,17 @@ def get_coverage(bam_file, chr, start, end):
 
 def get_bam_ref_name(bam_file):
     """Get first ref name in bam file"""
-    
+
     import pysam
     samfile = pysam.AlignmentFile(bam_file, "r")
     try:
         aln = samfile.fetch()
     except ValueError:
-        return 
+        return
     for a in aln:
         chr = samfile.get_reference_name(a.next_reference_id)
         if chr != None:
-            break    
+            break
     return chr
 
 def get_bam_aln(bam_file, chr, start, end, group=False):
@@ -283,12 +282,12 @@ def get_bam_aln(bam_file, chr, start, end, group=False):
     if chr is None:
         return
     if start<1:
-        start=0    
+        start=0
     samfile = pysam.AlignmentFile(bam_file, "r")
     iter = samfile.fetch(chr, start, end)
     d=[]
     for read in iter:
-        st = read.reference_start        
+        st = read.reference_start
         d.append([read.reference_start, read.reference_end, read.cigarstring,
                   read.query_name,read.query_length,read.mapping_quality])
     df = pd.DataFrame(d,columns=['start','end','cigar','name','length','mapq'])
@@ -302,12 +301,12 @@ def get_bam_aln(bam_file, chr, start, end, group=False):
     if bins < 1:
         bins = 1
     xbins = pd.cut(df.start,bins=bins)
-    df['y'] = df.groupby(xbins)['y'].transform(lambda x: x.cumsum())    
+    df['y'] = df.groupby(xbins)['y'].transform(lambda x: x.cumsum())
     return df
 
 def get_chrom(filename):
     """Get first sequence name in a bam file"""
-    
+
     if filename is None:
         return ''
     import pysam
@@ -319,14 +318,14 @@ def get_chrom(filename):
     for read in iter:
         if read.reference_name:
             return read.reference_name
-        
+
 def get_fasta_sequence(filename, start, end, key=0):
     """Get chunk of indexed fasta sequence at start/end points"""
-    
+
     from pyfaidx import Fasta
     refseq = Fasta(filename)
     if type(key) is int:
-        chrom = list(refseq.keys())[key]   
+        chrom = list(refseq.keys())[key]
     seq = refseq[chrom][start:end].seq
     return seq
 
@@ -346,14 +345,14 @@ def get_fasta_names(filename):
 
 def vcf_to_dataframe(vcf_file, quality=30):
     """Read vcf into dataframe"""
-    
+
     import vcf
-    vcf_reader = vcf.Reader(open(vcf_file,'r'))   
-    res=[]    
+    vcf_reader = vcf.Reader(open(vcf_file,'r'))
+    res=[]
     for rec in vcf_reader:
         x = rec.CHROM, rec.var_type, rec.var_subtype, rec.start, rec.end, str(rec.REF), str(rec.ALT), rec.QUAL, rec.INFO['DP'] ,rec.INFO['AO'][0],rec.INFO['RO']
         #print rec, rec.INFO['DP'] ,rec.INFO['RO']
         res.append(x)
-    res = pd.DataFrame(res,columns=['chrom','var_type','sub_type','start','end','REF','ALT','QUAL','DP','AO','RO']) 
+    res = pd.DataFrame(res,columns=['chrom','var_type','sub_type','start','end','REF','ALT','QUAL','DP','AO','RO'])
     res = res[res.QUAL>=quality]
     return res

@@ -132,10 +132,12 @@ def get_sequence_colors(seqs, palette='tab20'):
     from Bio.PDB.Polypeptide import aa1
     aa1 = list(aa1)
     aa1.append('-')
+    aa1.append('X')
     import matplotlib as mpl
     from matplotlib import cm
     pal = cm.get_cmap(palette, 256)
     pal = [mpl.colors.to_hex(i) for i in pal(np.linspace(0, 1, 20))]
+    pal.append('white')
     pal.append('white')
 
     pcolors = {i:j for i,j in zip(aa1,pal)}    

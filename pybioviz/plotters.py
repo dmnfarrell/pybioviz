@@ -167,9 +167,8 @@ def plot_sequence(seq, plot_width=1000, plot_height=20, fontsize='10pt', xaxis=T
     return p
 
 def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800, sizing_mode='stretch_width',
-                            palette='tab20', row_height=10, annot=None):
+                            palette='tab20', row_height=10, annot=None, labels=None):
     """Bokeh sequence alignment viewer.
-
     Args:
         aln: biopython Multiple Sequence Alignment
     """
@@ -277,7 +276,7 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800, sizing_mode='st
     """
     callback = CustomJS(
         args=dict(x_range=p1.x_range,rect=previewrect,text=seqtext,width=p1.plot_width), code=jscode)
-    slider = RangeSlider (start=0, end=N, value=(0,L), step=10, callback_policy="throttle")
+    slider = RangeSlider (start=0, end=N, value=(0,L), step=10)#, callback_policy="throttle")
     slider.js_on_change('value_throttled', callback)
 
     #callback for plot drag
@@ -288,8 +287,9 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800, sizing_mode='st
         rect.width = end-start;
         rect.x = start+rect.width/2;
     """
-    p1.x_range.callback = CustomJS(args=dict(slider=slider, range=p1.x_range, rect=previewrect),
+    callback = CustomJS(args=dict(slider=slider, range=p1.x_range, rect=previewrect),
                                   code=jscode)
+    p.x_range.js_on_change('start', callback)
     p = gridplot([[p],[slider],[p3],[p1],[p4]], toolbar_location='below', sizing_mode=sizing_mode)
     return p
 

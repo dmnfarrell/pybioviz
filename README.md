@@ -20,7 +20,7 @@ Current tools include:
 ### Installation
 
 ```
-pip install pybioviz
+pip install -e git+https://github.com/dmnfarrell/pybioviz.git#egg=pybioviz
 ```
 
 If using JupyterLab:

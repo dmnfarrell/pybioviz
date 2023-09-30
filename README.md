@@ -1,12 +1,10 @@
-[![PyPI version shields.io](https://img.shields.io/pypi/v/pybioviz.svg)](https://pypi.python.org/pypi/pybioviz/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Documentation Status](https://readthedocs.org/projects/pybioviz/badge/?version=latest)](https://pybioviz.readthedocs.io/en/latest/?badge=latest)
 
-# pybioviz
+# pybioviz - Bioinformatics visualization tools with PyViz Panel and Bokeh. 
 
 <img align="right" src=img/logo.svg width=150px>
 
-Bioinformatics visualization tools with PyViz Panel and Bokeh. This is a demonstration of bioinformatic dashbaords with panel and bokeh. These could be re-used inside Jupyter notebooks as part of bioinformatic workflows or deployed as local web apps. Not under active development so mainly proof of concept. Use code as needed.
+This is a demonstration project for bioinformatic dashboards with panel and bokeh. These could be re-used inside Jupyter notebooks as part of bioinformatic workflows or deployed as local web apps. Not under active development so mainly proof of concept. Use parts of the code as needed.
 
 Tools implemented:
 

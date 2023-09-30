@@ -47,7 +47,7 @@ def test1(rows=20, cols=100, plot_width=800):
     x_range = Range1d(0,10, bounds='auto')
 
     #entire sequence view (no text, with zoom)
-    p = figure(title=None, plot_width=plot_width, plot_height=300,
+    p = figure(title=None, width=plot_width, height=300,
                     tools="xpan,xwheel_zoom,save,reset")
     rects = Rect(x="x", y="y",  width=1, height=1, fill_color="color", line_width=0)
     p.add_glyph(source, rects)
@@ -83,7 +83,7 @@ def test2(start=0,end=500,rows=3,plot_width=1000,callback=None):
     txt = [str(i) for i in range(len(x))]
     source = ColumnDataSource({'x':x,'y':y,'w':w,'text':txt,'color':colors})
     tools="xpan,xwheel_zoom,box_select"
-    p = figure(title=None, plot_width=plot_width, plot_height=200, x_range=(0,100),
+    p = figure(title=None, width=plot_width, height=200, x_range=(0,100),
                 y_range=(0,m), tools=tools, min_border=0, toolbar_location='right')
     rects = Rect(x="x", y="y", width="w", height=.6, fill_color='color', fill_alpha=0.8, line_width=2, name='rects')
     #t = Text(x="x", y="y", text='text', text_font_size='9pt')
@@ -103,7 +103,7 @@ def plot_coverage(df, plot_width=800, plot_height=60, xaxis=True):
     """
 
     if df is None or len(df)==0:
-        return plot_empty(plot_width=plot_width,plot_height=plot_height)
+        return plot_empty(width=plot_width,height=plot_height)
     df['y'] = df.coverage/2
     source = ColumnDataSource(df)
     x_range = (df.pos.min(),df.pos.max())
@@ -114,7 +114,7 @@ def plot_coverage(df, plot_width=800, plot_height=60, xaxis=True):
             ("pos", "@pos"),
             ("coverage", "@coverage")
         ], point_policy='follow_mouse')
-    p = figure(title=None, plot_width=plot_width, plot_height=plot_height,
+    p = figure(title=None, width=plot_width, height=plot_height,
                x_range=x_range, y_range=(0,top), tools=[hover],
                min_border=0, toolbar_location='right')
     rects = Rect(x="pos", y="y", width=1, height="coverage", fill_color="gray", fill_alpha=0.3)
@@ -146,7 +146,7 @@ def plot_sequence(seq, plot_width=1000, plot_height=20, fontsize='10pt', xaxis=T
     colors = utils.get_sequence_colors([seq])
     source = ColumnDataSource(dict(x=x, text=text, colors=colors))
     x_range = Range1d(0,N, bounds='auto')
-    p = figure(plot_width=plot_width, plot_height=plot_height, x_range=x_range, y_range=(0,1),
+    p = figure(width=plot_width, height=plot_height, x_range=x_range, y_range=(0,1),
                tools=tools, min_border=0, toolbar_location='below')
     rects = Rect(x="x", y=0,  width=1, height=2, fill_color="colors", line_color=None, fill_alpha=0.4)
     p.add_glyph(source, rects)
@@ -209,7 +209,7 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800, sizing_mode='st
     #box_select = BoxSelectTool(callback=callback_select)
 
     #preview sequence view (no text)
-    p = figure(title=None, plot_width=plot_width, plot_height=S*2+25, x_range=x_range, y_range=(0,S), tools=tools,
+    p = figure(title=None, width=plot_width, height=S*2+25, x_range=x_range, y_range=(0,S), tools=tools,
                     min_border=0, toolbar_location='below', sizing_mode='stretch_width')
     rects = Rect(x="x", y="recty",  width=1, height=1, fill_color="colors", line_color=None, fill_alpha=0.4)
     p.add_glyph(source, rects)
@@ -219,7 +219,7 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800, sizing_mode='st
     p.grid.visible = False
 
     #full sequence text view
-    p1 = figure(title=None, plot_width=plot_width, plot_height=plot_height, x_range=view_range, y_range=ids, tools="xpan,reset",
+    p1 = figure(title=None, width=plot_width, height=plot_height, x_range=view_range, y_range=ids, tools="xpan,reset",
                     min_border=0, toolbar_location='below')#, lod_factor=1)
     seqtext = Text(x="x", y="y", text="text", text_align='center',text_color="black", text_font="monospace",text_font_size=fontsize)
     rects = Rect(x="x", y="recty",  width=1, height=1, fill_color="colors", line_color=None, fill_alpha=0.5)
@@ -234,7 +234,7 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800, sizing_mode='st
 
     source2 = ColumnDataSource(dict(x=x, cons=cons))
 
-    p3 = figure(title=None, plot_width=plot_width, plot_height=50, x_range=p1.x_range, y_range=(Range1d(min(cons),.5)), tools="xpan")
+    p3 = figure(title=None, width=plot_width, height=50, x_range=p1.x_range, y_range=(Range1d(min(cons),.5)), tools="xpan")
     rects2 = Rect(x="x", y=0,  width=1, height="cons", fill_color="gray", line_color=None, fill_alpha=0.7)
     p3.add_glyph(source2, rects2)
 
@@ -244,7 +244,7 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800, sizing_mode='st
     p3.background_fill_color = "beige"
 
     if annot != None:
-        p4 = figure(plot_width=plot_width, plot_height=35, x_range=p1.x_range, y_range=(0,1))
+        p4 = figure(width=plot_width, height=35, x_range=p1.x_range, y_range=(0,1))
         #for a in annot:
         x = [annot[i] for i in annot]
         p4.text(x, .5, text=[i for i in annot],
@@ -275,7 +275,7 @@ def plot_sequence_alignment(aln, fontsize="8pt", plot_width=800, sizing_mode='st
         text.text_font_size=fontsize+"pt";
     """
     callback = CustomJS(
-        args=dict(x_range=p1.x_range,rect=previewrect,text=seqtext,width=p1.plot_width), code=jscode)
+        args=dict(x_range=p1.x_range,rect=previewrect,text=seqtext,width=p1.width), code=jscode)
     slider = RangeSlider (start=0, end=N, value=(0,L), step=10)#, callback_policy="throttle")
     slider.js_on_change('value_throttled', callback)
 
@@ -346,7 +346,7 @@ def plot_features(features, start=0, end=None, fontsize="8pt", plot_width=800, p
     )
     tools=[hover, tools]
     #sequence text view with ability to scroll along x axis
-    p = figure(title=None, plot_width=plot_width, plot_height=plot_height, x_range=x_range,
+    p = figure(title=None, width=plot_width, height=plot_height, x_range=x_range,
                 y_range=(-1,rows), tools=tools, min_border=0, toolbar_location='right')#, lod_factor=1)
     #display text only at certain zoom level?
     #print (viewlen)
@@ -417,7 +417,7 @@ def plot_bam_alignment(bam_file, chr, start, end, height=50, fontsize="12pt",
     )
     tools=[hover,"ypan","save"]
 
-    p = figure(title=None, plot_width=plot_width, plot_height=plot_height, x_range=x_range, y_range=(0,height), tools=tools,
+    p = figure(title=None, width=plot_width, height=plot_height, x_range=x_range, y_range=(0,height), tools=tools,
                     min_border=0, toolbar_location='right')
     rects = Rect(x="x", y="y", width="length", height=h, fill_color="color", line_color='gray',fill_alpha=0.4)
     #if start-end > 100:
